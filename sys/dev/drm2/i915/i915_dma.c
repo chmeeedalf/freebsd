@@ -1142,7 +1142,7 @@ intel_alloc_mchbar_resource(struct drm_device *dev)
 	vga = device_get_parent(dev->dev);
 	dev_priv->mch_res_rid = 0x100;
 	dev_priv->mch_res = BUS_ALLOC_RESOURCE(device_get_parent(vga),
-	    dev->dev, SYS_RES_MEMORY, &dev_priv->mch_res_rid, 0, ~0UL,
+	    dev->dev, SYS_RES_MEMORY, &dev_priv->mch_res_rid, 0, ~0,
 	    MCHBAR_SIZE, RF_ACTIVE | RF_SHAREABLE);
 	if (dev_priv->mch_res == NULL) {
 		DRM_DEBUG_DRIVER("failed bus alloc\n");

@@ -368,7 +368,7 @@ nexus_alloc_resource(device_t bus, device_t child, int type, int *rid,
 	device_t nexus;
 	int isdefault, passthrough;
 
-	isdefault = (start == 0UL && end == ~0UL);
+	isdefault = (start == 0 && end == ~0);
 	passthrough = (device_get_parent(child) != bus);
 	nexus = bus;
 	while (strcmp(device_get_name(device_get_parent(nexus)), "root") != 0)

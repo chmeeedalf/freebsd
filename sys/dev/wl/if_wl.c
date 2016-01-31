@@ -605,7 +605,7 @@ wl_allocate_resources(device_t device)
     int ports = 16;		/* Number of ports */
 
     sc->res_ioport = bus_alloc_resource(device, SYS_RES_IOPORT,
-	&sc->rid_ioport, 0ul, ~0ul, ports, RF_ACTIVE);
+	&sc->rid_ioport, 0, ~0, ports, RF_ACTIVE);
     if (sc->res_ioport == NULL)
 	goto errexit;
 

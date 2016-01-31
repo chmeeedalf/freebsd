@@ -278,7 +278,7 @@ digi_isa_probe(device_t dev)
 	/* Temporarily map our io ports */
 	sc->res.iorid = 0;
 	sc->res.io = bus_alloc_resource(dev, SYS_RES_IOPORT, &sc->res.iorid,
-	    0ul, ~0ul, IO_SIZE, RF_ACTIVE);
+	    0, ~0, IO_SIZE, RF_ACTIVE);
 	if (sc->res.io == NULL)
 		return (ENXIO);
 
@@ -292,7 +292,7 @@ digi_isa_probe(device_t dev)
 	/* Temporarily map our memory */
 	sc->res.mrid = 0;
 	sc->res.mem = bus_alloc_resource(dev, SYS_RES_MEMORY, &sc->res.mrid,
-	    0ul, ~0ul, sc->win_size, 0);
+	    0, ~0, sc->win_size, 0);
 	if (sc->res.mem == NULL) {
 		device_printf(dev, "0x%lx: Memory range is in use\n", sc->pmem);
 		bus_release_resource(dev, SYS_RES_IOPORT, sc->res.iorid,
@@ -343,7 +343,7 @@ digi_isa_attach(device_t dev)
 	/* Allocate resources (verified in digi_isa_probe()) */
 	sc->res.iorid = 0;
 	sc->res.io = bus_alloc_resource(dev, SYS_RES_IOPORT, &sc->res.iorid,
-	    0ul, ~0ul, iosize, RF_ACTIVE);
+	    0, ~0, iosize, RF_ACTIVE);
 	if (sc->res.io == NULL)
 		return (ENXIO);
 
@@ -357,7 +357,7 @@ digi_isa_attach(device_t dev)
 
 	sc->res.mrid = 0;
 	sc->res.mem = bus_alloc_resource(dev, SYS_RES_MEMORY, &sc->res.mrid,
-	    0ul, ~0ul, msize, RF_ACTIVE);
+	    0, ~0, msize, RF_ACTIVE);
 	if (sc->res.mem == NULL) {
 		device_printf(dev, "0x%lx: Memory range is in use\n", sc->pmem);
 		sc->hidewin(sc);

@@ -503,8 +503,8 @@ lbc_attach(device_t dev)
 	rm = &sc->sc_rman;
 	rm->rm_type = RMAN_ARRAY;
 	rm->rm_descr = "Local Bus Space";
-	rm->rm_start = 0UL;
-	rm->rm_end = ~0UL;
+	rm->rm_start = 0;
+	rm->rm_end = ~0;
 	error = rman_init(rm);
 	if (error)
 		goto fail;
@@ -673,7 +673,7 @@ lbc_alloc_resource(device_t bus, device_t child, int type, int *rid,
 	int needactivate;
 
 	/* We only support default allocations. */
-	if (start != 0ul || end != ~0ul)
+	if (start != 0 || end != ~0)
 		return (NULL);
 
 	sc = device_get_softc(bus);

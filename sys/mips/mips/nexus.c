@@ -244,12 +244,12 @@ nexus_alloc_resource(device_t bus, device_t child, int type, int *rid,
 	struct rman			*rm;
 	int				 isdefault, needactivate, passthrough;
 
-	dprintf("%s: entry (%p, %p, %d, %p, %p, %p, %ld, %d)\n",
+	dprintf("%s: entry (%p, %p, %d, %p, %p, %p, %jd, %d)\n",
 	    __func__, bus, child, type, rid, (void *)(intptr_t)start,
 	    (void *)(intptr_t)end, count, flags);
 	dprintf("%s: requested rid is %d\n", __func__, *rid);
 
-	isdefault = (start == 0UL && end == ~0UL && count == 1);
+	isdefault = (start == 0 && end == ~0 && count == 1);
 	needactivate = flags & RF_ACTIVE;
 	passthrough = (device_get_parent(child) != bus);
 	rle = NULL;

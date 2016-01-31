@@ -749,7 +749,7 @@ map_memory_window_bar(struct ntb_softc *ntb, struct ntb_pci_bar_info *bar)
 	 * Ideally I could have just specified the size when I allocated the
 	 * resource like:
 	 *  bus_alloc_resource(ntb->device,
-	 *	SYS_RES_MEMORY, &bar->pci_resource_id, 0ul, ~0ul,
+	 *	SYS_RES_MEMORY, &bar->pci_resource_id, 0, ~0,
 	 *	1ul << bar_size_bits, RF_ACTIVE);
 	 * but the PCI driver does not honor the size in this call, so we have
 	 * to modify it after the fact.

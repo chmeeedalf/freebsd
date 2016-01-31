@@ -3236,9 +3236,9 @@ resource_list_delete(struct resource_list *rl, int type, int rid)
  * @param type		the type of resource to allocate
  * @param rid		a pointer to the resource identifier
  * @param start		hint at the start of the resource range - pass
- *			@c 0UL for any start address
+ *			@c 0 for any start address
  * @param end		hint at the end of the resource range - pass
- *			@c ~0UL for any end address
+ *			@c ~0 for any end address
  * @param count		hint at the size of range required - pass @c 1
  *			for any size
  * @param flags		any extra flags to control the resource
@@ -3293,9 +3293,9 @@ resource_list_reserve(struct resource_list *rl, device_t bus, device_t child,
  * @param type		the type of resource to allocate
  * @param rid		a pointer to the resource identifier
  * @param start		hint at the start of the resource range - pass
- *			@c 0UL for any start address
+ *			@c 0 for any start address
  * @param end		hint at the end of the resource range - pass
- *			@c ~0UL for any end address
+ *			@c ~0 for any end address
  * @param count		hint at the size of range required - pass @c 1
  *			for any size
  * @param flags		any extra flags to control the resource
@@ -3311,7 +3311,7 @@ resource_list_alloc(struct resource_list *rl, device_t bus, device_t child,
 {
 	struct resource_list_entry *rle = NULL;
 	int passthrough = (device_get_parent(child) != bus);
-	int isdefault = (start == 0UL && end == ~0UL);
+	int isdefault = (start == 0 && end == ~0);
 
 	if (passthrough) {
 		return (BUS_ALLOC_RESOURCE(device_get_parent(bus), child,

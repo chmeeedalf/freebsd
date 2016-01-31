@@ -395,7 +395,7 @@ amdsbwd_probe(device_t dev)
 		return (ENXIO);
 	}
 	rid = 0;
-	res = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid, 0ul, ~0ul,
+	res = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid, 0, ~0,
 	    AMDSB_PMIO_WIDTH, RF_ACTIVE | RF_SHAREABLE);
 	if (res == NULL) {
 		device_printf(dev, "bus_alloc_resource for IO failed\n");

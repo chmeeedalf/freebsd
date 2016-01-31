@@ -180,7 +180,7 @@ gic_v3_ofw_bus_alloc_res(device_t bus, device_t child, int type, int *rid,
 	struct resource_list_entry *rle;
 	int ranges_len;
 
-	if ((start == 0UL) && (end == ~0UL)) {
+	if ((start == 0) && (end == ~0)) {
 		if ((di = device_get_ivars(child)) == NULL)
 			return (NULL);
 		if (type != SYS_RES_MEMORY)

@@ -135,7 +135,7 @@ rman_init(struct rman *rm)
 	}
 
 	if (rm->rm_start == 0 && rm->rm_end == 0)
-		rm->rm_end = ~0ul;
+		rm->rm_end = ~0;
 	if (rm->rm_type == RMAN_UNINIT)
 		panic("rman_init");
 	if (rm->rm_type == RMAN_GAUGE)
@@ -174,7 +174,7 @@ rman_manage_region(struct rman *rm, rman_res_t start, rman_res_t end)
 
 	/* Skip entries before us. */
 	TAILQ_FOREACH(s, &rm->rm_list, r_link) {
-		if (s->r_end == ULONG_MAX)
+		if (s->r_end == ~0)
 			break;
 		if (s->r_end + 1 >= r->r_start)
 			break;
@@ -464,8 +464,8 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 		goto out;
 	}
 
-	amask = (1ul << RF_ALIGNMENT(flags)) - 1;
-	KASSERT(start <= ULONG_MAX - amask,
+	amask = ((rman_res_t)1 << RF_ALIGNMENT(flags)) - 1;
+	KASSERT(start <= RM_MAX_END - amask,
 	    ("start (%#lx) + amask (%#lx) would wrap around", start, amask));
 
 	/* If bound is 0, bmask will also be 0 */
@@ -484,7 +484,7 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 			    s->r_start, end));
 			break;
 		}
-		if (s->r_start > ULONG_MAX - amask) {
+		if (s->r_start > RM_MAX_END - amask) {
 			DPRINTF(("s->r_start (%#lx) + amask (%#lx) too large\n",
 			    s->r_start, amask));
 			break;

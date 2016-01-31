@@ -1964,7 +1964,7 @@ xe_activate(device_t dev)
 	if (!sc->modem) {
 		sc->port_rid = 0;	/* 0 is managed by pccard */
 		sc->port_res = bus_alloc_resource(dev, SYS_RES_IOPORT,
-		    &sc->port_rid, 0ul, ~0ul, 16, RF_ACTIVE);
+		    &sc->port_rid, 0, ~0, 16, RF_ACTIVE);
 	} else if (sc->dingo) {
 		/*
 		 * Find a 16 byte aligned ioport for the card.
@@ -1998,7 +1998,7 @@ xe_activate(device_t dev)
 		DEVPRINTF(1, (dev, "Finding I/O port for CEM2/CEM3\n"));
 		sc->ce2_port_rid = 0;	/* 0 is managed by pccard */
 		sc->ce2_port_res = bus_alloc_resource(dev, SYS_RES_IOPORT,
-		    &sc->ce2_port_rid, 0ul, ~0ul, 8, RF_ACTIVE);
+		    &sc->ce2_port_rid, 0, ~0, 8, RF_ACTIVE);
 		if (sc->ce2_port_res == NULL) {
 			DEVPRINTF(1, (dev,
 			    "Cannot allocate I/O port for modem\n"));

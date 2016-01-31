@@ -447,7 +447,7 @@ thunder_pem_alloc_resource(device_t dev, device_t child, int type, int *rid,
 		    end, count, flags));
 	};
 
-	if ((start == 0UL) && (end == ~0UL)) {
+	if ((start == 0) && (end == ~0)) {
 		device_printf(dev,
 		    "Cannot allocate resource with unspecified range\n");
 		goto fail;

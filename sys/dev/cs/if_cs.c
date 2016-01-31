@@ -407,7 +407,7 @@ cs_alloc_port(device_t dev, int rid, int size)
 	struct resource *res;
 
 	res = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid,
-	    0ul, ~0ul, size, RF_ACTIVE);
+	    0, ~0, size, RF_ACTIVE);
 	if (res == NULL)
 		return (ENOENT);
 	sc->port_rid = rid;

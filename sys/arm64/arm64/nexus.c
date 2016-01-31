@@ -217,7 +217,7 @@ nexus_alloc_resource(device_t bus, device_t child, int type, int *rid,
 	 * (ie. they aren't maintained by a child bus), then work out
 	 * the start/end values.
 	 */
-	if ((start == 0UL) && (end == ~0UL) && (count == 1)) {
+	if ((start == 0) && (end == ~0) && (count == 1)) {
 		if (device_get_parent(child) != bus || ndev == NULL)
 			return(NULL);
 		rle = resource_list_find(&ndev->nx_resources, type, *rid);

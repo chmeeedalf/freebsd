@@ -270,7 +270,7 @@ oce_hw_pci_alloc(POCE_SOFTC sc)
 	else
 		sc->devcfg_res = bus_alloc_resource(sc->dev,
 				SYS_RES_MEMORY, &rr,
-				0ul, ~0ul, 32768,
+				0, ~0, 32768,
 				RF_ACTIVE|RF_SHAREABLE);
 
 	if (!sc->devcfg_res)

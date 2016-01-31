@@ -170,7 +170,7 @@ apb_alloc_resource(device_t bus, device_t child, int type, int *rid,
 	struct rman			*rm;
 	int				 isdefault, needactivate, passthrough;
 
-	isdefault = (start == 0UL && end == ~0UL);
+	isdefault = (start == 0 && end == ~0);
 	needactivate = flags & RF_ACTIVE;
 	/*
 	 * Pass memory requests to nexus device

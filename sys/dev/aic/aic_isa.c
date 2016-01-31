@@ -76,7 +76,7 @@ aic_isa_alloc_resources(device_t dev)
 
 	rid = 0;
 	sc->sc_port = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid,
-					0ul, ~0ul, AIC_ISA_PORTSIZE, RF_ACTIVE);
+					0, ~0, AIC_ISA_PORTSIZE, RF_ACTIVE);
 	if (!sc->sc_port) {
 		device_printf(dev, "I/O port allocation failed\n");
 		return (ENOMEM);

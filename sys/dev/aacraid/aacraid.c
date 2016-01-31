@@ -1665,7 +1665,7 @@ aac_check_firmware(struct aac_softc *sc)
 			sc->aac_regs_rid0, sc->aac_regs_res0);
 		sc->aac_regs_res0 = bus_alloc_resource(
 			sc->aac_dev, SYS_RES_MEMORY, &sc->aac_regs_rid0,
-			0ul, ~0ul, atu_size, RF_ACTIVE);
+			0, ~0, atu_size, RF_ACTIVE);
 		if (sc->aac_regs_res0 == NULL) {
 			sc->aac_regs_res0 = bus_alloc_resource_any(
 				sc->aac_dev, SYS_RES_MEMORY,

@@ -101,7 +101,7 @@ pmc_isa_alloc_resources(device_t dev)
 
 	rid = 0;
 	sc->port_res = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid,
-					  0ul, ~0ul, PMC_ISA_PORTSIZE,
+					  0, ~0, PMC_ISA_PORTSIZE,
 					  RF_ACTIVE);
 	if (sc->port_res == NULL) {
 		return (ENOMEM);

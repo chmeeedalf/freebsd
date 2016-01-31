@@ -318,7 +318,7 @@ ct_space_map(device_t dev, struct bshw *hw,
 	*memhp = NULL;
 
 	port_rid = 0;
-	*iohp = bus_alloc_resource(dev, SYS_RES_IOPORT, &port_rid, 0ul, ~0ul,
+	*iohp = bus_alloc_resource(dev, SYS_RES_IOPORT, &port_rid, 0, ~0,
 				   BSHW_IOSZ, RF_ACTIVE);
 	if (*iohp == NULL)
 		return ENXIO;
@@ -327,7 +327,7 @@ ct_space_map(device_t dev, struct bshw *hw,
 		return 0;
 
 	mem_rid = 0;
-	*memhp = bus_alloc_resource(dev, SYS_RES_MEMORY, &mem_rid, 0ul, ~0ul,
+	*memhp = bus_alloc_resource(dev, SYS_RES_MEMORY, &mem_rid, 0, ~0,
 				    BSHW_MEMSZ, RF_ACTIVE);
 	if (*memhp == NULL) {
 		bus_release_resource(dev, SYS_RES_IOPORT, port_rid, *iohp);

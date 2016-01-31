@@ -96,7 +96,7 @@ sbni_pci_probe(device_t dev)
 
 	sc->io_rid = PCIR_BAR(0);
  	sc->io_res = bus_alloc_resource(dev, SYS_RES_IOPORT, &sc->io_rid,
-					0ul, ~0ul, ports, RF_ACTIVE);
+					0, ~0, ports, RF_ACTIVE);
 	if (!sc->io_res) {
 		device_printf(dev, "cannot allocate io ports!\n");
 		if (sc->slave_sc)

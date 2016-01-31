@@ -64,7 +64,7 @@ cm_isa_probe(dev)
 
 	rid = 0;
 	sc->port_res = bus_alloc_resource(
-	    dev, SYS_RES_IOPORT, &rid, 0ul, ~0ul, CM_IO_PORTS, RF_ACTIVE);
+	    dev, SYS_RES_IOPORT, &rid, 0, ~0, CM_IO_PORTS, RF_ACTIVE);
 	if (sc->port_res == NULL)
 		return (ENOENT);
 
@@ -75,7 +75,7 @@ cm_isa_probe(dev)
 
 	rid = 0;
 	sc->mem_res = bus_alloc_resource(
-	    dev, SYS_RES_MEMORY, &rid, 0ul, ~0ul, CM_MEM_SIZE, RF_ACTIVE);
+	    dev, SYS_RES_MEMORY, &rid, 0, ~0, CM_MEM_SIZE, RF_ACTIVE);
 	if (sc->mem_res == NULL) {
 		cm_release_resources(dev);
 		return (ENOENT);

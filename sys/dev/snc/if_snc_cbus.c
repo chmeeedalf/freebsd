@@ -148,7 +148,7 @@ snc_isa_probe(device_t dev)
 			bus_set_resource(dev, SYS_RES_IOPORT, rid,
 					 port, SNEC_NREGS);
 			res = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid,
-						 0ul, ~0ul, SNEC_NREGS,
+						 0, ~0, SNEC_NREGS,
 						 0 /* !RF_ACTIVE */);
 			if (res) break;
 		}

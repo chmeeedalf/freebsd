@@ -81,7 +81,7 @@ cy_isa_probe(device_t dev)
 
 	mem_rid = 0;
 	mem_res = bus_alloc_resource(dev, SYS_RES_MEMORY, &mem_rid,
-	    0ul, ~0ul, 0ul, RF_ACTIVE);
+	    0, ~0, 0, RF_ACTIVE);
 	if (mem_res == NULL) {
 		device_printf(dev, "ioport resource allocation failed\n");
 		return (ENXIO);
@@ -113,7 +113,7 @@ cy_isa_attach(device_t dev)
 
 	mem_rid = 0;
 	mem_res = bus_alloc_resource(dev, SYS_RES_MEMORY, &mem_rid,
-	    0ul, ~0ul, 0ul, RF_ACTIVE);
+	    0, ~0, 0, RF_ACTIVE);
 	if (mem_res == NULL) {
 		device_printf(dev, "memory resource allocation failed\n");
 		goto fail;
@@ -127,7 +127,7 @@ cy_isa_attach(device_t dev)
 	}
 
 	irq_rid = 0;
-	irq_res = bus_alloc_resource(dev, SYS_RES_IRQ, &irq_rid, 0ul, ~0ul, 0ul,
+	irq_res = bus_alloc_resource(dev, SYS_RES_IRQ, &irq_rid, 0, ~0, 0,
 	    RF_SHAREABLE | RF_ACTIVE);
 	if (irq_res == NULL) {
 		device_printf(dev, "interrupt resource allocation failed\n");

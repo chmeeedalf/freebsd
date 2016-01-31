@@ -2053,7 +2053,7 @@ static int hptiop_attach(device_t dev)
 
 	rid = 0;
 	if ((hba->irq_res = bus_alloc_resource(hba->pcidev, SYS_RES_IRQ,
-			&rid, 0, ~0ul, 1, RF_SHAREABLE | RF_ACTIVE)) == NULL) {
+			&rid, 0, ~0, 1, RF_SHAREABLE | RF_ACTIVE)) == NULL) {
 		device_printf(dev, "allocate irq failed!\n");
 		goto free_hba_path;
 	}

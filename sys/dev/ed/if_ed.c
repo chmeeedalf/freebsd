@@ -164,7 +164,7 @@ ed_alloc_port(device_t dev, int rid, int size)
 	struct resource *res;
 
 	res = bus_alloc_resource(dev, SYS_RES_IOPORT, &rid,
-	    0ul, ~0ul, size, RF_ACTIVE);
+	    0, ~0, size, RF_ACTIVE);
 	if (res) {
 		sc->port_res = res;
 		sc->port_used = size;
@@ -185,7 +185,7 @@ ed_alloc_memory(device_t dev, int rid, int size)
 	struct resource *res;
 
 	res = bus_alloc_resource(dev, SYS_RES_MEMORY, &rid,
-	    0ul, ~0ul, size, RF_ACTIVE);
+	    0, ~0, size, RF_ACTIVE);
 	if (res) {
 		sc->mem_res = res;
 		sc->mem_used = size;
