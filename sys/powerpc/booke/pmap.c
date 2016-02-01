@@ -419,6 +419,8 @@ tlb_calc_wimg(vm_paddr_t pa, vm_memattr_t ma)
 			return (PTE_I);
 		case VM_MEMATTR_WRITE_THROUGH:
 			return (PTE_W | PTE_M);
+		case VM_MEMATTR_CACHEABLE:
+			return _TLB_ENTRY_MEM;
 		}
 	}
 
