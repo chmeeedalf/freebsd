@@ -159,7 +159,7 @@ rman_manage_region(struct rman *rm, rman_res_t start, rman_res_t end)
 	struct resource_i *r, *s, *t;
 	int rv = 0;
 
-	DPRINTF(("rman_manage_region: <%s> request: start %#lx, end %#lx\n",
+	DPRINTF(("rman_manage_region: <%s> request: start %#jx, end %#jx\n",
 	    rm->rm_descr, start, end));
 	if (start < rm->rm_start || end > rm->rm_end)
 		return EINVAL;
@@ -444,8 +444,8 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 
 	rv = NULL;
 
-	DPRINTF(("rman_reserve_resource_bound: <%s> request: [%#lx, %#lx], "
-	       "length %#lx, flags %u, device %s\n", rm->rm_descr, start, end,
+	DPRINTF(("rman_reserve_resource_bound: <%s> request: [%#jx, %#jx], "
+	       "length %#jx, flags %u, device %s\n", rm->rm_descr, start, end,
 	       count, flags,
 	       dev == NULL ? "<null>" : device_get_nameunit(dev)));
 	KASSERT((flags & RF_FIRSTSHARE) == 0,
@@ -466,7 +466,7 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 
 	amask = ((rman_res_t)1 << RF_ALIGNMENT(flags)) - 1;
 	KASSERT(start <= RM_MAX_END - amask,
-	    ("start (%#lx) + amask (%#lx) would wrap around", start, amask));
+	    ("start (%#jx) + amask (%#jx) would wrap around", start, amask));
 
 	/* If bound is 0, bmask will also be 0 */
 	bmask = ~(bound - 1);
@@ -474,18 +474,18 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 	 * First try to find an acceptable totally-unshared region.
 	 */
 	for (s = r; s; s = TAILQ_NEXT(s, r_link)) {
-		DPRINTF(("considering [%#lx, %#lx]\n", s->r_start, s->r_end));
+		DPRINTF(("considering [%#jx, %#jx]\n", s->r_start, s->r_end));
 		/*
 		 * The resource list is sorted, so there is no point in
 		 * searching further once r_start is too large.
 		 */
 		if (s->r_start > end - (count - 1)) {
-			DPRINTF(("s->r_start (%#lx) + count - 1> end (%#lx)\n",
+			DPRINTF(("s->r_start (%#jx) + count - 1> end (%#jx)\n",
 			    s->r_start, end));
 			break;
 		}
 		if (s->r_start > RM_MAX_END - amask) {
-			DPRINTF(("s->r_start (%#lx) + amask (%#lx) too large\n",
+			DPRINTF(("s->r_start (%#jx) + amask (%#jx) too large\n",
 			    s->r_start, amask));
 			break;
 		}
@@ -493,7 +493,7 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 			DPRINTF(("region is allocated\n"));
 			continue;
 		}
-		rstart = ulmax(s->r_start, start);
+		rstart = ummax(s->r_start, start);
 		/*
 		 * Try to find a region by adjusting to boundary and alignment
 		 * until both conditions are satisfied. This is not an optimal
@@ -505,16 +505,16 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 				rstart += bound - (rstart & ~bmask);
 		} while ((rstart & amask) != 0 && rstart < end &&
 		    rstart < s->r_end);
-		rend = ulmin(s->r_end, ulmax(rstart + count - 1, end));
+		rend = ummin(s->r_end, ummax(rstart + count - 1, end));
 		if (rstart > rend) {
 			DPRINTF(("adjusted start exceeds end\n"));
 			continue;
 		}
-		DPRINTF(("truncated region: [%#lx, %#lx]; size %#lx (requested %#lx)\n",
+		DPRINTF(("truncated region: [%#jx, %#jx]; size %#jx (requested %#jx)\n",
 		       rstart, rend, (rend - rstart + 1), count));
 
 		if ((rend - rstart + 1) >= count) {
-			DPRINTF(("candidate region: [%#lx, %#lx], size %#lx\n",
+			DPRINTF(("candidate region: [%#jx, %#jx], size %#jx\n",
 			       rstart, rend, (rend - rstart + 1)));
 			if ((s->r_end - s->r_start + 1) == count) {
 				DPRINTF(("candidate region is entire chunk\n"));
@@ -545,7 +545,7 @@ rman_reserve_resource_bound(struct rman *rm, rman_res_t start, rman_res_t end,
 
 			if (s->r_start < rv->r_start && s->r_end > rv->r_end) {
 				DPRINTF(("splitting region in three parts: "
-				       "[%#lx, %#lx]; [%#lx, %#lx]; [%#lx, %#lx]\n",
+				       "[%#jx, %#jx]; [%#jx, %#jx]; [%#jx, %#jx]\n",
 				       s->r_start, rv->r_start - 1,
 				       rv->r_start, rv->r_end,
 				       rv->r_end + 1, s->r_end));
@@ -1032,7 +1032,7 @@ dump_rman_header(struct rman *rm)
 
 	if (db_pager_quit)
 		return;
-	db_printf("rman %p: %s (0x%lx-0x%lx full range)\n",
+	db_printf("rman %p: %s (0x%jx-0x%jx full range)\n",
 	    rm, rm->rm_descr, rm->rm_start, rm->rm_end);
 }
 
@@ -1051,7 +1051,7 @@ dump_rman(struct rman *rm)
 				devname = "nomatch";
 		} else
 			devname = NULL;
-		db_printf("    0x%lx-0x%lx (RID=%d) ",
+		db_printf("    0x%jx-0x%jx (RID=%d) ",
 		    r->r_start, r->r_end, r->r_rid);
 		if (devname != NULL)
 			db_printf("(%s)\n", devname);

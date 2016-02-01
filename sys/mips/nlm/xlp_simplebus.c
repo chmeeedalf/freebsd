@@ -218,7 +218,7 @@ xlp_simplebus_alloc_resource(device_t bus, device_t child, int type, int *rid,
 			if (j == sc->nranges && sc->nranges != 0) {
 				if (bootverbose)
 					device_printf(bus, "Could not map resource "
-					    "%#lx-%#lx\n", start, end);
+					    "%#jx-%#jx\n", start, end);
 				return (NULL);
 			}
 		}
@@ -244,7 +244,7 @@ xlp_simplebus_alloc_resource(device_t bus, device_t child, int type, int *rid,
 		} else {
 			if (bootverbose)
 				device_printf(bus, "Invalid MEM range"
-					    "%#lx-%#lx\n", start, end);
+					    "%#jx-%#jx\n", start, end);
 			return (NULL);
 		}
 		break;

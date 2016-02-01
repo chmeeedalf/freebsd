@@ -319,7 +319,7 @@ nexus_set_resource(device_t dev, device_t child, int type, int rid,
 	struct resource_list		*rl = &ndev->nx_resources;
 	struct resource_list_entry	*rle;
 
-	dprintf("%s: entry (%p, %p, %d, %d, %p, %ld)\n",
+	dprintf("%s: entry (%p, %p, %d, %d, %p, %jd)\n",
 	    __func__, dev, child, type, rid, (void *)(intptr_t)start, count);
 
 	rle = resource_list_add(rl, type, rid, start, start + count - 1,
