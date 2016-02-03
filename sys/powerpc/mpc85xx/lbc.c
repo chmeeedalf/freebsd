@@ -113,8 +113,8 @@ static driver_t lbc_driver = {
 
 devclass_t lbc_devclass;
 
-EARLY_DRIVER_MODULE(lbc, ofwbus, lbc_driver, lbc_devclass, 0, 0,
-    BUS_PASS_BUS + BUS_PASS_ORDER_MIDDLE);
+EARLY_DRIVER_MODULE(lbc, ofwbus, lbc_driver, lbc_devclass,
+    0, 0, BUS_PASS_BUS);
 
 /*
  * Calculate address mask used by OR(n) registers. Use memory region size to

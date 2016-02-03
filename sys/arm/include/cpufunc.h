@@ -71,8 +71,6 @@ struct cpu_functions {
 
 	void	(*cf_tlb_flushID)	(void);
 	void	(*cf_tlb_flushID_SE)	(u_int va);
-	void	(*cf_tlb_flushI)	(void);
-	void	(*cf_tlb_flushI_SE)	(u_int va);
 	void	(*cf_tlb_flushD)	(void);
 	void	(*cf_tlb_flushD_SE)	(u_int va);
 
@@ -151,7 +149,6 @@ struct cpu_functions {
 
 	/* Other functions */
 
-	void	(*cf_flush_prefetchbuf)	(void);
 	void	(*cf_drain_writebuf)	(void);
 
 	void	(*cf_sleep)		(int mode);
@@ -173,8 +170,6 @@ extern u_int cputype;
 
 #define	cpu_tlb_flushID()	cpufuncs.cf_tlb_flushID()
 #define	cpu_tlb_flushID_SE(e)	cpufuncs.cf_tlb_flushID_SE(e)
-#define	cpu_tlb_flushI()	cpufuncs.cf_tlb_flushI()
-#define	cpu_tlb_flushI_SE(e)	cpufuncs.cf_tlb_flushI_SE(e)
 #define	cpu_tlb_flushD()	cpufuncs.cf_tlb_flushD()
 #define	cpu_tlb_flushD_SE(e)	cpufuncs.cf_tlb_flushD_SE(e)
 
@@ -195,7 +190,6 @@ extern u_int cputype;
 #define cpu_l2cache_wbinv_range(a, s) cpufuncs.cf_l2cache_wbinv_range((a), (s))
 #define cpu_l2cache_drain_writebuf() cpufuncs.cf_l2cache_drain_writebuf()
 
-#define	cpu_flush_prefetchbuf()	cpufuncs.cf_flush_prefetchbuf()
 #define	cpu_drain_writebuf()	cpufuncs.cf_drain_writebuf()
 #define cpu_sleep(m)		cpufuncs.cf_sleep(m)
 
@@ -218,9 +212,7 @@ void	fa526_setup		(void);
 void	fa526_setttb		(u_int ttb);
 void	fa526_context_switch	(void);
 void	fa526_cpu_sleep		(int);
-void	fa526_tlb_flushI_SE	(u_int);
 void	fa526_tlb_flushID_SE	(u_int);
-void	fa526_flush_prefetchbuf	(void);
 
 void	fa526_icache_sync_all	(void);
 void	fa526_icache_sync_range(vm_offset_t start, vm_size_t end);
@@ -233,11 +225,13 @@ void	fa526_idcache_wbinv_range(vm_offset_t start, vm_size_t end);
 #endif
 
 
-#ifdef CPU_ARM9
+#if defined(CPU_ARM9) || defined(CPU_ARM9E)
 void	arm9_setttb		(u_int);
-
 void	arm9_tlb_flushID_SE	(u_int va);
+void	arm9_context_switch	(void);
+#endif
 
+#if defined(CPU_ARM9) 
 void	arm9_icache_sync_all	(void);
 void	arm9_icache_sync_range	(vm_offset_t, vm_size_t);
 
@@ -249,8 +243,6 @@ void	arm9_dcache_wb_range	(vm_offset_t, vm_size_t);
 void	arm9_idcache_wbinv_all	(void);
 void	arm9_idcache_wbinv_range (vm_offset_t, vm_size_t);
 
-void	arm9_context_switch	(void);
-
 void	arm9_setup		(void);
 
 extern unsigned arm9_dcache_sets_max;
@@ -260,11 +252,6 @@ extern unsigned arm9_dcache_index_inc;
 #endif
 
 #if defined(CPU_ARM9E)
-void	arm10_tlb_flushID_SE	(u_int);
-void	arm10_tlb_flushI_SE	(u_int);
-
-void	arm10_context_switch	(void);
-
 void	arm10_setup		(void);
 
 u_int	sheeva_control_ext 		(u_int, u_int);
@@ -316,8 +303,6 @@ void	pj4bv7_setup			(void);
 #if defined(CPU_ARM1176)
 void	arm11_tlb_flushID	(void);
 void	arm11_tlb_flushID_SE	(u_int);
-void	arm11_tlb_flushI	(void);
-void	arm11_tlb_flushI_SE	(u_int);
 void	arm11_tlb_flushD	(void);
 void	arm11_tlb_flushD_SE	(u_int va);
 
@@ -335,7 +320,6 @@ void    arm11x6_setttb                  (u_int);
 void    arm11x6_idcache_wbinv_all       (void);
 void    arm11x6_dcache_wbinv_all        (void);
 void    arm11x6_icache_sync_all         (void);
-void    arm11x6_flush_prefetchbuf       (void);
 void    arm11x6_icache_sync_range       (vm_offset_t, vm_size_t);
 void    arm11x6_idcache_wbinv_range     (vm_offset_t, vm_size_t);
 void    arm11x6_setup                   (void);
@@ -364,7 +348,6 @@ void	armv5_ec_idcache_wbinv_range(vm_offset_t, vm_size_t);
   defined(CPU_XSCALE_80219) || defined(CPU_XSCALE_81342)
 
 void	armv4_tlb_flushID	(void);
-void	armv4_tlb_flushI	(void);
 void	armv4_tlb_flushD	(void);
 void	armv4_tlb_flushD_SE	(u_int va);
 

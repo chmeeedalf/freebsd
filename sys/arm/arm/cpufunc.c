@@ -116,8 +116,6 @@ struct cpu_functions arm9_cpufuncs = {
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
 	arm9_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
@@ -142,7 +140,6 @@ struct cpu_functions arm9_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
 	armv4_drain_writebuf,		/* drain_writebuf	*/
 
 	(void *)cpufunc_nullop,		/* sleep		*/
@@ -170,9 +167,7 @@ struct cpu_functions armv5_ec_cpufuncs = {
 	/* TLB functions */
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
-	arm10_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	arm10_tlb_flushI_SE,		/* tlb_flushI_SE	*/
+	arm9_tlb_flushID_SE,		/* tlb_flushID_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
@@ -198,14 +193,13 @@ struct cpu_functions armv5_ec_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
 	armv4_drain_writebuf,		/* drain_writebuf	*/
 
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
 
-	arm10_context_switch,		/* context_switch	*/
+	arm9_context_switch,		/* context_switch	*/
 
 	arm10_setup			/* cpu setup		*/
 
@@ -224,9 +218,7 @@ struct cpu_functions sheeva_cpufuncs = {
 	/* TLB functions */
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
-	arm10_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	arm10_tlb_flushI_SE,		/* tlb_flushI_SE	*/
+	arm9_tlb_flushID_SE,		/* tlb_flushID_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
@@ -252,14 +244,13 @@ struct cpu_functions sheeva_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
 	armv4_drain_writebuf,		/* drain_writebuf	*/
 
 	sheeva_cpu_sleep,		/* sleep		*/
 
 	/* Soft functions */
 
-	arm10_context_switch,		/* context_switch	*/
+	arm9_context_switch,		/* context_switch	*/
 
 	arm10_setup			/* cpu setup		*/
 };
@@ -280,8 +271,6 @@ struct cpu_functions pj4bv7_cpufuncs = {
 
 	armv7_tlb_flushID,		/* tlb_flushID		*/
 	armv7_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv7_tlb_flushID,		/* tlb_flushI		*/
-	armv7_tlb_flushID_SE,		/* tlb_flushI_SE	*/
 	armv7_tlb_flushID,		/* tlb_flushD		*/
 	armv7_tlb_flushID_SE,		/* tlb_flushD_SE	*/
 
@@ -306,7 +295,6 @@ struct cpu_functions pj4bv7_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
 	armv7_drain_writebuf,		/* drain_writebuf	*/
 
 	(void *)cpufunc_nullop,		/* sleep		*/
@@ -336,8 +324,6 @@ struct cpu_functions xscale_cpufuncs = {
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
 	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
@@ -362,7 +348,6 @@ struct cpu_functions xscale_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
 	armv4_drain_writebuf,		/* drain_writebuf	*/
 
 	xscale_cpu_sleep,		/* sleep		*/
@@ -392,8 +377,6 @@ struct cpu_functions xscalec3_cpufuncs = {
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
 	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
@@ -418,7 +401,6 @@ struct cpu_functions xscalec3_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
 	armv4_drain_writebuf,		/* drain_writebuf	*/
 
 	xscale_cpu_sleep,		/* sleep		*/
@@ -447,8 +429,6 @@ struct cpu_functions fa526_cpufuncs = {
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
 	fa526_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	fa526_tlb_flushI_SE,		/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
@@ -473,7 +453,6 @@ struct cpu_functions fa526_cpufuncs = {
 
 	/* Other functions */
 
-	fa526_flush_prefetchbuf,	/* flush_prefetchbuf	*/
 	armv4_drain_writebuf,		/* drain_writebuf	*/
 
 	fa526_cpu_sleep,		/* sleep		*/
@@ -502,8 +481,6 @@ struct cpu_functions arm1176_cpufuncs = {
 
 	arm11_tlb_flushID,              /* tlb_flushID          */
 	arm11_tlb_flushID_SE,           /* tlb_flushID_SE       */
-	arm11_tlb_flushI,               /* tlb_flushI           */
-	arm11_tlb_flushI_SE,            /* tlb_flushI_SE        */
 	arm11_tlb_flushD,               /* tlb_flushD           */
 	arm11_tlb_flushD_SE,            /* tlb_flushD_SE        */
 
@@ -529,7 +506,6 @@ struct cpu_functions arm1176_cpufuncs = {
 
 	/* Other functions */
 
-	arm11x6_flush_prefetchbuf,      /* flush_prefetchbuf    */
 	arm11_drain_writebuf,           /* drain_writebuf       */
 
 	arm11x6_sleep,                  /* sleep                */
@@ -561,8 +537,6 @@ struct cpu_functions cortexa_cpufuncs = {
 
 	armv7_tlb_flushID,              /* tlb_flushID          */
 	armv7_tlb_flushID_SE,           /* tlb_flushID_SE       */
-	armv7_tlb_flushID,              /* tlb_flushI           */
-	armv7_tlb_flushID_SE,           /* tlb_flushI_SE        */
 	armv7_tlb_flushID,              /* tlb_flushD           */
 	armv7_tlb_flushID_SE,           /* tlb_flushD_SE        */
 
@@ -592,7 +566,6 @@ struct cpu_functions cortexa_cpufuncs = {
 
 	/* Other functions */
 
-	cpufunc_nullop,                 /* flush_prefetchbuf    */
 	armv7_drain_writebuf,           /* drain_writebuf       */
 
 	armv7_cpu_sleep,                /* sleep                */
