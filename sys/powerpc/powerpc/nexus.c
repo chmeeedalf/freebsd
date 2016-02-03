@@ -195,7 +195,7 @@ nexus_activate_resource(device_t bus __unused, device_t child __unused,
 
 		start = (vm_paddr_t) rman_get_start(r);
 		if (bootverbose)
-			printf("nexus mapdev: start %jx, len %ld\n",
+			printf("nexus mapdev: start %jx, len %jd\n",
 			    (uintmax_t)start, rman_get_size(r));
 
 		ma = VM_MEMATTR_DEFAULT;
