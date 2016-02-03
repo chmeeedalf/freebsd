@@ -1970,7 +1970,7 @@ win_cpu_from_dt(void)
 	pcell_t ranges[48];
 	phandle_t node;
 	int i, entry_size, err, t, tuple_size, tuples;
-	u_long sram_base, sram_size;
+	uint64_t sram_base, sram_size;
 
 	t = 0;
 	/* Retrieve 'ranges' property of '/localbus' node. */
@@ -2032,7 +2032,7 @@ fdt_win_setup(void)
 {
 	phandle_t node, child;
 	struct soc_node_spec *soc_node;
-	u_long size, base;
+	uint64_t size, base;
 	int err, i;
 
 	node = OF_finddevice("/");

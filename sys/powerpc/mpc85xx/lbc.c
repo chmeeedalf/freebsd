@@ -113,7 +113,8 @@ static driver_t lbc_driver = {
 
 devclass_t lbc_devclass;
 
-DRIVER_MODULE(lbc, ofwbus, lbc_driver, lbc_devclass, 0, 0);
+EARLY_DRIVER_MODULE(lbc, ofwbus, lbc_driver, lbc_devclass, 0, 0,
+    BUS_PASS_BUS + BUS_PASS_ORDER_MIDDLE);
 
 /*
  * Calculate address mask used by OR(n) registers. Use memory region size to
@@ -354,7 +355,7 @@ static int
 fdt_lbc_reg_decode(phandle_t node, struct lbc_softc *sc,
     struct lbc_devinfo *di)
 {
-	u_long start, end, count;
+	uint64_t start, end, count;
 	pcell_t *reg, *regptr;
 	pcell_t addr_cells, size_cells;
 	int tuple_size, tuples;
@@ -391,8 +392,8 @@ fdt_lbc_reg_decode(phandle_t node, struct lbc_softc *sc,
 		start = sc->sc_banks[bank].kva + start;
 		end = start + count - 1;
 
-		debugf("reg addr bank = %d, start = %lx, end = %lx, "
-		    "count = %lx\n", bank, start, end, count);
+		debugf("reg addr bank = %d, start = %jx, end = %jx, "
+		    "count = %jx\n", bank, start, end, count);
 
 		/* Use bank (CS) cell as rid. */
 		resource_list_add(&di->di_res, SYS_RES_MEMORY, bank, start,
@@ -434,7 +435,7 @@ lbc_attach(device_t dev)
 	struct lbc_softc *sc;
 	struct lbc_devinfo *di;
 	struct rman *rm;
-	u_long offset, start, size;
+	uint64_t offset, start, size;
 	device_t cdev;
 	phandle_t node, child;
 	pcell_t *ranges, *rangesptr;
@@ -573,7 +574,7 @@ lbc_attach(device_t dev)
 
 		size = fdt_data_get((void *)ranges, sc->sc_size_cells);
 		ranges += sc->sc_size_cells;
-		debugf("bank = %d, start = %lx, size = %lx\n", bank,
+		debugf("bank = %d, start = %jx, size = %jx\n", bank,
 		    start, size);
 
 		sc->sc_banks[bank].addr = start + offset;

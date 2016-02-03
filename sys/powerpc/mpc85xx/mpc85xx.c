@@ -327,7 +327,7 @@ static vm_offset_t
 mpc85xx_map_dcsr(void)
 {
 	phandle_t node;
-	u_long b, s;
+	uint64_t b, s;
 	int err;
 
 	/*

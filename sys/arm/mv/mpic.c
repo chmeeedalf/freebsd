@@ -331,7 +331,7 @@ mv_mpic_get_msi(void)
 int
 mv_msi_data(int irq, uint64_t *addr, uint32_t *data)
 {
-	u_long phys, base, size;
+	uint64_t phys, base, size;
 	phandle_t node;
 	int error;
 

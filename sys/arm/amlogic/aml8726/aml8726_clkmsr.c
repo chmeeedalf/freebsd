@@ -245,8 +245,8 @@ aml8726_clkmsr_bus_frequency()
 	struct resource mem;
 	struct aml8726_clkmsr_softc sc;
 	phandle_t node;
-	u_long pbase, psize;
-	u_long start, size;
+	uint64_t pbase, psize;
+	uint64_t start, size;
 	int freq;
 
 	KASSERT(aml8726_soc_hw_rev != AML_SOC_HW_REV_UNKNOWN,

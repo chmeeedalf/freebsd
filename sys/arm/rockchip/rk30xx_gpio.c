@@ -522,7 +522,7 @@ rk30_gpios_prop_handle(phandle_t ctrl, pcell_t *gpios, int len)
 	pcell_t gpio_cells;
 	int inc, t, tuples, tuple_size;
 	int dir, flags, pin, i;
-	u_long gpio_ctrl, size;
+	uint64_t gpio_ctrl, size;
 
 	sc = rk30_gpio_sc;
 	if (sc == NULL)

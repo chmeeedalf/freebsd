@@ -546,7 +546,7 @@ mv_handle_gpios_prop(phandle_t ctrl, pcell_t *gpios, int len)
 	pcell_t gpio_cells, pincnt;
 	int inc, t, tuples, tuple_size;
 	int dir, flags, pin;
-	u_long gpio_ctrl, size;
+	uint64_t gpio_ctrl, size;
 	struct mv_gpio_softc sc;
 
 	pincnt = 0;

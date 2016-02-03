@@ -279,7 +279,7 @@ platform_sram_devmap(struct arm_devmap_entry *map)
 {
 #if !defined(SOC_MV_ARMADAXP)
 	phandle_t child, root;
-	u_long base, size;
+	uint64_t base, size;
 	/*
 	 * SRAM range.
 	 */

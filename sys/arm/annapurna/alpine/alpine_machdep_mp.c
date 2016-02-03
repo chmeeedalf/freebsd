@@ -143,8 +143,8 @@ static int
 alpine_get_cpu_resume_base(u_long *pbase, u_long *psize)
 {
 	phandle_t node;
-	u_long base = 0;
-	u_long size = 0;
+	uint64_t base = 0;
+	uint64_t size = 0;
 
 	if (pbase == NULL || psize == NULL)
 		return (EINVAL);
@@ -169,8 +169,8 @@ static int
 alpine_get_nb_base(u_long *pbase, u_long *psize)
 {
 	phandle_t node;
-	u_long base = 0;
-	u_long size = 0;
+	uint64_t base = 0;
+	uint64_t size = 0;
 
 	if (pbase == NULL || psize == NULL)
 		return (EINVAL);
@@ -272,8 +272,8 @@ static int
 alpine_get_serdes_base(u_long *pbase, u_long *psize)
 {
 	phandle_t node;
-	u_long base = 0;
-	u_long size = 0;
+	uint64_t base = 0;
+	uint64_t size = 0;
 
 	if (pbase == NULL || psize == NULL)
 		return (EINVAL);

@@ -553,7 +553,7 @@ cpsw_attach(device_t dev)
 	int phy, nsegs, error;
 	uint32_t reg;
 	pcell_t phy_id[3];
-	u_long mem_base, mem_size;
+	uint64_t mem_base, mem_size;
 	phandle_t child;
 	int len;
 

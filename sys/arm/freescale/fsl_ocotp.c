@@ -68,7 +68,7 @@ static void
 fsl_ocotp_devmap(void)
 {
 	phandle_t child, root;
-	u_long base, size;
+	uint64_t base, size;
 
 	if ((root = OF_finddevice("/")) == 0)
 		goto fatal;

@@ -67,12 +67,12 @@ vm_offset_t fdt_immr_size;
 struct fdt_ic_list fdt_ic_list_head = SLIST_HEAD_INITIALIZER(fdt_ic_list_head);
 
 static int
-fdt_get_range_by_busaddr(phandle_t node, u_long addr, u_long *base,
-    u_long *size)
+fdt_get_range_by_busaddr(phandle_t node, uint64_t addr, uint64_t *base,
+    uint64_t *size)
 {
 	pcell_t ranges[32], *rangesptr;
 	pcell_t addr_cells, size_cells, par_addr_cells;
-	u_long bus_addr, par_bus_addr, pbase, psize;
+	uint64_t bus_addr, par_bus_addr, pbase, psize;
 	int err, i, len, tuple_size, tuples;
 
 	if (node == 0) {
@@ -142,11 +142,11 @@ fdt_get_range_by_busaddr(phandle_t node, u_long addr, u_long *base,
 }
 
 int
-fdt_get_range(phandle_t node, int range_id, u_long *base, u_long *size)
+fdt_get_range(phandle_t node, int range_id, uint64_t *base, uint64_t *size)
 {
 	pcell_t ranges[6], *rangesptr;
 	pcell_t addr_cells, size_cells, par_addr_cells;
-	u_long par_bus_addr, pbase, psize;
+	uint64_t par_bus_addr, pbase, psize;
 	int err, len, tuple_size, tuples;
 
 	if ((fdt_addrsize_cells(node, &addr_cells, &size_cells)) != 0)
@@ -205,7 +205,7 @@ int
 fdt_immr_addr(vm_offset_t immr_va)
 {
 	phandle_t node;
-	u_long base, size;
+	uint64_t base, size;
 	int r;
 
 	/*
@@ -396,7 +396,7 @@ fdt_pm_is_enabled(phandle_t node)
 	return (ret);
 }
 
-u_long
+uint64_t
 fdt_data_get(void *data, int cells)
 {
 
@@ -430,8 +430,8 @@ fdt_addrsize_cells(phandle_t node, int *addr_cells, int *size_cells)
 }
 
 int
-fdt_data_to_res(pcell_t *data, int addr_cells, int size_cells, u_long *start,
-    u_long *count)
+fdt_data_to_res(pcell_t *data, int addr_cells, int size_cells, uint64_t *start,
+    uint64_t *count)
 {
 
 	/* Address portion. */
@@ -450,7 +450,7 @@ fdt_data_to_res(pcell_t *data, int addr_cells, int size_cells, u_long *start,
 }
 
 int
-fdt_regsize(phandle_t node, u_long *base, u_long *size)
+fdt_regsize(phandle_t node, uint64_t *base, uint64_t *size)
 {
 	pcell_t reg[4];
 	int addr_cells, len, size_cells;
@@ -473,12 +473,12 @@ fdt_regsize(phandle_t node, u_long *base, u_long *size)
 int
 fdt_reg_to_rl(phandle_t node, struct resource_list *rl)
 {
-	u_long end, count, start;
+	uintmax_t end, count, start;
 	pcell_t *reg, *regptr;
 	pcell_t addr_cells, size_cells;
 	int tuple_size, tuples;
 	int i, rv;
-	long busaddr, bussize;
+	uint64_t busaddr, bussize;
 
 	if (fdt_addrsize_cells(OF_parent(node), &addr_cells, &size_cells) != 0)
 		return (ENXIO);
@@ -510,7 +510,7 @@ fdt_reg_to_rl(phandle_t node, struct resource_list *rl)
 		start += busaddr;
 		end = start + count - 1;
 
-		debugf("reg addr start = %lx, end = %lx, count = %lx\n", start,
+		debugf("reg addr start = %jx, end = %jx, count = %jx\n", start,
 		    end, count);
 
 		resource_list_add(rl, SYS_RES_MEMORY, i, start, end,
@@ -632,7 +632,7 @@ fdt_get_reserved_regions(struct mem_region *mr, int *mrcnt)
 	for (i = 0; i < tuples; i++) {
 
 		rv = fdt_data_to_res(reservep, addr_cells, size_cells,
-			(u_long *)&mr[i].mr_start, (u_long *)&mr[i].mr_size);
+			&mr[i].mr_start, &mr[i].mr_size);
 
 		if (rv != 0)
 			goto out;
@@ -690,7 +690,7 @@ fdt_get_mem_regions(struct mem_region *mr, int *mrcnt, uint32_t *memsize)
 	for (i = 0; i < tuples; i++) {
 
 		rv = fdt_data_to_res(regp, addr_cells, size_cells,
-			(u_long *)&mr[i].mr_start, (u_long *)&mr[i].mr_size);
+			&mr[i].mr_start, &mr[i].mr_size);
 
 		if (rv != 0)
 			goto out;

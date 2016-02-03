@@ -68,7 +68,9 @@ int alpine_get_devmap_base(bus_addr_t *pa, bus_addr_t *size);
 
 int alpine_get_devmap_base(bus_addr_t *pa, bus_addr_t *size)
 {
+	uint64_t tpa, tsize;
 	phandle_t node;
+	int err;
 
 	if ((node = OF_finddevice("/")) == 0)
 		return (ENXIO);
@@ -76,15 +78,21 @@ int alpine_get_devmap_base(bus_addr_t *pa, bus_addr_t *size)
 	if ((node = fdt_find_compatible(node, "simple-bus", 1)) == 0)
 		return (ENXIO);
 
-	return fdt_get_range(node, 0, pa, size);
+	err = fdt_get_range(node, 0, pa, size);
+	if (err)
+		return (err);
+	*pa = tpa;
+	*size = tsize;
+
+	return (0);
 }
 
 static int
 alpine_get_wdt_base(uint32_t *pbase, uint32_t *psize)
 {
 	phandle_t node;
-	u_long base = 0;
-	u_long size = 0;
+	uint64_t base = 0;
+	uint64_t size = 0;
 
 	if (pbase == NULL || psize == NULL)
 		return (EINVAL);

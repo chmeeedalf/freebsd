@@ -47,7 +47,7 @@ fdt_flash_fill_slices(device_t dev, struct flash_slice *slices, int *slices_num)
 {
 	char *slice_name;
 	phandle_t dt_node, dt_child;
-	u_long base, size;
+	uint64_t base, size;
 	int i;
 	ssize_t name_len;
 
