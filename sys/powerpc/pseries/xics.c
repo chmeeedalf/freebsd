@@ -225,21 +225,22 @@ xicp_attach(device_t dev)
 		return (ENXIO);
 	}
 
+#ifdef POWERNV
+	if (ofw_bus_is_compatible(dev, "ibm,opal-intc")) {
+			/*
+			 * Run POWER9 XIVE interrupt controller in XICS
+			 * compatibility mode.
+			 */
+			sc->xics_emu = true;
+			opal_call(OPAL_XIVE_RESET, OPAL_XIVE_XICS_MODE_EMU);
+	}
+#endif
 	if (OF_hasprop(phandle, "ibm,interrupt-server-ranges")) {
 		OF_getencprop(phandle, "ibm,interrupt-server-ranges",
 		    sc->cpu_range, sizeof(sc->cpu_range));
 		sc->cpu_range[1] += sc->cpu_range[0];
 		device_printf(dev, "Handling CPUs %d-%d\n", sc->cpu_range[0],
 		    sc->cpu_range[1]-1);
-#ifdef POWERNV
-	} else if (ofw_bus_is_compatible(dev, "ibm,opal-intc")) {
-			/*
-			 * For now run POWER9 XIVE interrupt controller in XICS
-			 * compatibility mode.
-			 */
-			sc->xics_emu = true;
-			opal_call(OPAL_XIVE_RESET, OPAL_XIVE_XICS_MODE_EMU);
-#endif
 	} else {
 		sc->cpu_range[0] = 0;
 		sc->cpu_range[1] = mp_ncpus;
