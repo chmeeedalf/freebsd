@@ -253,6 +253,7 @@ SYSCTL_OPAQUE(_hw, OID_AUTO, cpu_features2, CTLFLAG_RD,
 
 #ifdef __powerpc64__
 register_t	lpcr = LPCR_LPES;
+int		enable_specexec;
 #endif
 
 /* Provide some user-friendly aliases for bits in cpu_features */
@@ -681,9 +682,16 @@ cpu_powerx_setup(int cpuid, uint16_t vers)
 		isync();
 		break;
 	case IBMPOWER9:
+		SYSCTL_ADD_INT(NULL, SYSCTL_STATIC_CHILDREN(_machdep),
+		    OID_AUTO, "enable_speculative_exec",  CTLFLAG_RDTUN,
+		    &enable_specexec, 0, "Enable speculative execution");
 		cpu_idle_hook = cpu_idle_power9;
 		mtspr(SPR_LPCR, mfspr(SPR_LPCR) | LPCR_PECE_WAKESET);
 		isync();
+		if (enable_specexec) {
+			mtspr(SPR_HID0, mfspr(SPR_HID0) | HID0_SPECEXEC);
+			isync();
+		}
 		break;
 	default:
 		return;

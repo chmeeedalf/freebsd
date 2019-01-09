@@ -34,6 +34,7 @@
 
 /* Hardware Implementation Dependent registers for the PowerPC */
 #define	HID0_RADIX	0x0080000000000000	/* Enable Radix page tables (POWER9) */
+#define	HID0_SPECEXEC	0x0010000000000000	/* Enable speculative execution (POWER9) */
 
 #define HID0_EMCP	0x80000000  /* Enable machine check pin */
 #define HID0_DBP	0x40000000  /* Disable 60x bus parity generation */

@@ -140,6 +140,7 @@ struct thread;
 extern void enter_idle_powerx(void);
 extern uint64_t can_wakeup;
 extern register_t lpcr;
+extern int enable_specexec;
 #endif
 
 void	cpu_halt(void);
