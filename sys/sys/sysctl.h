@@ -1019,6 +1019,7 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 #define	KERN_PROC_CWD		42	/* process current working directory */
 #define	KERN_PROC_NFDS		43	/* number of open file descriptors */
 #define	KERN_PROC_SIGFASTBLK	44	/* address of fastsigblk magic word */
+#define	KERN_PROC_FDMAP		45	/* file descriptor map */
 
 /*
  * KERN_IPC identifiers

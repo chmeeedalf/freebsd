@@ -4636,6 +4636,52 @@ static SYSCTL_NODE(_kern_proc, KERN_PROC_FILEDESC, filedesc,
     CTLFLAG_RD|CTLFLAG_MPSAFE, sysctl_kern_proc_filedesc,
     "Process filedesc entries");
 
+static int
+sysctl_kern_proc_fdmap(SYSCTL_HANDLER_ARGS)
+{
+	struct filedesc *fdp;
+	struct proc *p;
+	size_t size;
+	int error, *name;
+	NDSLOTTYPE *map;
+
+	name = (int *)arg1;
+
+	if (name == 0) {
+		p = curproc;
+		PROC_LOCK(p);
+	} else {
+		error = pget((pid_t)name[0], PGET_CANDEBUG | PGET_NOTWEXIT, &p);
+		if (error != 0)
+			return (error);
+	}
+
+	fdp = fdhold(p);
+	PROC_UNLOCK(p);
+	if (fdp == NULL)
+		return (ENOENT);
+	FILEDESC_SLOCK(fdp);
+	map = NULL;
+	do {
+		if (map != NULL)
+			free(map, M_TEMP);
+		size = NDSLOTS(fdp->fd_nfiles) * NDSLOTSIZE;
+		FILEDESC_SUNLOCK(fdp);
+		map = malloc(size, M_TEMP, M_WAITOK);
+		FILEDESC_SLOCK(fdp);
+	} while (size < NDSLOTS(fdp->fd_nfiles) * NDSLOTSIZE);
+	memcpy(map, fdp->fd_map, size);
+	FILEDESC_SUNLOCK(fdp);
+	fddrop(fdp);
+	error = SYSCTL_OUT(req, map, size);
+	free(map, M_TEMP);
+	return (error);
+}
+
+static SYSCTL_NODE(_kern_proc, KERN_PROC_FDMAP, fdmap,
+    CTLFLAG_RD | CTLFLAG_MPSAFE, sysctl_kern_proc_fdmap,
+    "Process file descriptor map");
+
 /*
  * Store a process current working directory information to sbuf.
  *
