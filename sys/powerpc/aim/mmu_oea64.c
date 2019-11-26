@@ -2809,20 +2809,23 @@ moea64_remove_all(vm_page_t m)
 				moea64_sp_demote(pvo);
 			}
 			moea64_pvo_remove_from_pmap(pvo);
-		}
-		moea64_pvo_remove_from_page_locked(pvo, m);
-		if (!wasdead)
-			LIST_INSERT_HEAD(&freequeue, pvo, pvo_vlink);
+		} else
+			LIST_REMOVE(pvo, pvo_vlink);
+
+		/* Don't let moea64_pvo_remove_from_page_locked() touch it. */
+		pvo->pvo_pmap = NULL;
 		PMAP_UNLOCK(pmap);
-		
 	}
-	KASSERT(!pmap_page_is_mapped(m), ("Page still has mappings"));
-	KASSERT((m->a.flags & PGA_WRITEABLE) == 0, ("Page still writable"));
+	LIST_SWAP(&freequeue, vm_page_to_pvoh(m), pvo_entry, pvo_vlink);
+	vm_page_aflag_clear(m, PGA_WRITEABLE | PGA_EXECUTABLE);
 	PV_PAGE_UNLOCK(m);
 
 	/* Clean up UMA allocations */
-	LIST_FOREACH_SAFE(pvo, &freequeue, pvo_vlink, next_pvo)
+	LIST_FOREACH_SAFE(pvo, &freequeue, pvo_vlink, next_pvo) {
 		free_pvo_entry(pvo);
+		STAT_MOEA64(moea64_pvo_entries--);
+		STAT_MOEA64(moea64_pvo_remove_calls++);
+	}
 }
 
 /*
