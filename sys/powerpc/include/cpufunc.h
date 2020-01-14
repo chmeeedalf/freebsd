@@ -31,9 +31,10 @@
 #ifndef _MACHINE_CPUFUNC_H_
 #define	_MACHINE_CPUFUNC_H_
 
-#ifdef _KERNEL
-
 #include <sys/types.h>
+#include <sys/errno.h>
+
+#ifdef _KERNEL
 
 #include <machine/psl.h>
 #include <machine/spr.h>
@@ -310,5 +311,29 @@ nop_prio_high(void)
 }
 
 #endif /* _KERNEL */
+
+static __inline void
+vas_copy(void *addr, unsigned long offset)
+{
+	/* copy rA, rB; rA = addr, rB = offset */
+	__asm __volatile("copy %0, %1" :: "r"(addr), "r"(offset));
+}
+
+static __inline int
+vas_paste(void *addr, unsigned long offset)
+{
+	int cr;
+	/* paste. rA, rB; rA = addr, rB = offset */
+	__asm __volatile("paste. %0, %1; mfocrf %0, 0x80" : "=r"(cr):
+	    "r"(addr), "r"(offset));
+	return (((cr >> 28) & 0x2) != 0 ? 0 : ENXIO);
+}
+
+static __inline void
+vas_cpabort(void)
+{
+	/* cpabort */
+	__asm __volatile("cp_abort");
+}
 
 #endif /* !_MACHINE_CPUFUNC_H_ */

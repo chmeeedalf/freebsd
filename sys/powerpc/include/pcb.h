@@ -62,6 +62,7 @@ struct pcb {
 #define	PCB_CDSCR	0x10	/* Process had Custom DSCR initialized */
 #define	PCB_HTM		0x20	/* Process had HTM initialized */
 #define	PCB_CFSCR	0x40	/* Process had FSCR updated */
+#define	PCB_VAS		0x80	/* Process is using the VAS */
 	struct fpu {
 		union {
 #if _BYTE_ORDER == _BIG_ENDIAN

@@ -206,6 +206,7 @@ ASSYM(PCB_LR, offsetof(struct pcb, pcb_lr));
 ASSYM(PCB_ONFAULT, offsetof(struct pcb, pcb_onfault));
 ASSYM(PCB_FLAGS, offsetof(struct pcb, pcb_flags));
 ASSYM(PCB_FPU, PCB_FPU);
+ASSYM(PCB_VAS, PCB_VAS);
 ASSYM(PCB_VEC, PCB_VEC);
 ASSYM(PCB_CDSCR, PCB_CDSCR);
 ASSYM(PCB_CFSCR, PCB_CFSCR);

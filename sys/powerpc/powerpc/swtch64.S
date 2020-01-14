@@ -159,9 +159,13 @@ save_tar:
 	std	%r7, PCB_TAR(%r17)
 1:
 	andi.	%r7, %r18, PCB_CDSCR
-	beq	.L0
+	beq	cpabort
 	mfspr	%r6, SPR_DSCRP
 	std	%r6, PCB_DSCR(%r17)
+cpabort:
+	andi.	%r7, %r18, PCB_VAS
+	beq	.L0
+	cp_abort
 
 .L0:
 	/* Save FPU context if needed */

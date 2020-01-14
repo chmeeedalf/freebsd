@@ -550,6 +550,7 @@ set_mcontext(struct thread *td, mcontext_t *mcp)
  * Currently this includes:
  * DSCR -- Data stream control register (PowerISA 2.06+)
  * FSCR -- Facility Status and Control Register (PowerISA 2.07+)
+ * VAS -- Virtual Accelerator Switchboard (POWER9)
  */
 static void
 cleanup_power_extras(struct thread *td)
@@ -565,6 +566,8 @@ cleanup_power_extras(struct thread *td)
 		mtspr(SPR_FSCR, 0);
 	if (pcb_flags & PCB_CDSCR) 
 		mtspr(SPR_DSCRP, 0);
+	if (pcb_flags & PCB_VAS)
+		vas_cpabort();
 
 	if (pcb_flags & PCB_FPU)
 		cleanup_fpscr();
