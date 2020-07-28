@@ -280,13 +280,13 @@ xive_write_1(struct xive_softc *sc, bus_size_t offset, uint8_t val)
 static uint64_t
 xive_read_mmap8(vm_offset_t addr)
 {
-	return (*(volatile uint64_t *)addr);
+	return (be64toh(*(volatile uint64_t *)addr));
 }
 
 static void
 xive_write_mmap8(vm_offset_t addr, uint64_t val)
 {
-	*(uint64_t *)(addr) = val;
+	*(uint64_t *)(addr) = htobe64(val);
 }
 
 /* Device interfaces. */
