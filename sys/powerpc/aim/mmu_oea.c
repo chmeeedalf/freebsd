@@ -1788,6 +1788,62 @@ moea_pinit0(pmap_t pm)
 	bzero(&pm->pm_stats, sizeof(pm->pm_stats));
 }
 
+static void
+moea_pvo_protect(pmap_t pm, struct pvo_entry *pvo, vm_prot_t prot)
+{
+	struct	pte *pt;
+	struct	pte old_pte;
+	vm_page_t	m;
+	int32_t	refchg;
+
+	/*
+	 * Grab the PTE pointer before we diddle with the cached PTE
+	 * copy.
+	 */
+	pt = moea_pvo_to_pte(pvo, -1);
+
+	/* Cache old PTE for protection checks. */
+	old_pte = pvo->pvo_pte.pte;
+	/*
+	 * Change the protection of the page.
+	 */
+	pvo->pvo_pte.pte.pte_lo &= ~PTE_PP;
+	if ((prot & VM_PROT_WRITE) != VM_PROT_NONE)
+		pvo->pvo_pte.pte.pte_lo |= PTE_BW;
+	else
+		pvo->pvo_pte.pte.pte_lo |= PTE_BR;
+
+	/*
+	 * If the PVO is in the page table, update that pte as well.
+	 */
+	if (pt == NULL) {
+		refchg = (old_pte.pte_lo & PTE_BW) ? PTE_CHG : 0;
+	} else {
+		moea_pte_change(pt, &pvo->pvo_pte.pte, pvo->pvo_vaddr);
+		mtx_unlock(&moea_table_mutex);
+		refchg = (pt->pte_lo & (PTE_REF | PTE_CHG));
+	}
+
+	m = PHYS_TO_VM_PAGE(old_pte.pte_lo & PTE_RPGN);
+	if (pm != kernel_pmap && m != NULL &&
+	    (m->a.flags & PGA_EXECUTABLE) == 0 &&
+	    (pvo->pvo_pte.pa & (PTE_I | PTE_G)) == 0 &&
+	    (pm->pm_sr[PVO_VADDR(pvo) >> ADDR_SR_SHFT] & SR_N) == 0) {
+		if ((m->oflags & VPO_UNMANAGED) == 0)
+			vm_page_aflag_set(m, PGA_EXECUTABLE);
+		moea_syncicache(pvo->pvo_pte.pa & PTE_RPGN,
+		    PAGE_SIZE);
+	}
+	if (m != NULL && (pvo->pvo_vaddr & PVO_MANAGED) &&
+	    (old_pte.pte_lo & PTE_BW)) {
+		refchg = atomic_readandclear_32(&m->md.mdpg_attrs);
+		if (refchg & PTE_CHG)
+			vm_page_dirty(m);
+		if (refchg & PTE_REF)
+			vm_page_aflag_set(m, PGA_REFERENCED);
+	}
+}
+
 /*
  * Set the physical protection on the specified range of this map as requested.
  */
@@ -1796,7 +1852,6 @@ moea_protect(pmap_t pm, vm_offset_t sva, vm_offset_t eva,
     vm_prot_t prot)
 {
 	struct	pvo_entry *pvo, *tpvo, key;
-	struct	pte *pt;
 
 	KASSERT(pm == &curproc->p_vmspace->vm_pmap || pm == kernel_pmap,
 	    ("moea_protect: non current pmap"));
@@ -1812,25 +1867,7 @@ moea_protect(pmap_t pm, vm_offset_t sva, vm_offset_t eva,
 	for (pvo = RB_NFIND(pvo_tree, &pm->pmap_pvo, &key);
 	    pvo != NULL && PVO_VADDR(pvo) < eva; pvo = tpvo) {
 		tpvo = RB_NEXT(pvo_tree, &pm->pmap_pvo, pvo);
-
-		/*
-		 * Grab the PTE pointer before we diddle with the cached PTE
-		 * copy.
-		 */
-		pt = moea_pvo_to_pte(pvo, -1);
-		/*
-		 * Change the protection of the page.
-		 */
-		pvo->pvo_pte.pte.pte_lo &= ~PTE_PP;
-		pvo->pvo_pte.pte.pte_lo |= PTE_BR;
-
-		/*
-		 * If the PVO is in the page table, update that pte as well.
-		 */
-		if (pt != NULL) {
-			moea_pte_change(pt, &pvo->pvo_pte.pte, pvo->pvo_vaddr);
-			mtx_unlock(&moea_table_mutex);
-		}
+		moea_pvo_protect(pm, pvo, prot);
 	}
 	rw_wunlock(&pvh_global_lock);
 	PMAP_UNLOCK(pm);
