@@ -2511,8 +2511,8 @@ tlb0_flush_entry(vm_offset_t va)
 
 	mtx_assert(&tlbivax_mutex, MA_OWNED);
 
-	__asm __volatile("tlbivax 0, %0" :: "r"(va & MAS2_EPN_MASK));
-	__asm __volatile("isync; msync");
+	__asm __volatile("isync; tlbivax 0, %0" :: "r"(va & MAS2_EPN_MASK));
+	__asm __volatile("msync; isync");
 	__asm __volatile("tlbsync; msync");
 
 	CTR1(KTR_PMAP, "%s: e", __func__);
