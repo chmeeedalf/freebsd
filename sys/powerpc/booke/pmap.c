@@ -147,6 +147,7 @@ __FBSDID("$FreeBSD$");
 
 extern unsigned char _etext[];
 extern unsigned char _end[];
+extern struct pcpu *pcpus;
 
 extern uint32_t *bootinfo;
 
@@ -685,6 +686,8 @@ mmu_booke_bootstrap(vm_offset_t start, vm_offset_t kernelend)
 		panic("mmu_booke_bootstrap: phys_avail too small");
 
 	data_end = round_page(data_end);
+	pcpus = (struct pcpu *)data_end;
+	data_end = round_page(data_end + sizeof(struct pcpu) * MAXCPU);
 	vm_page_array = (vm_page_t)data_end;
 	/*
 	 * Get a rough idea (upper bound) on the size of the page array.  The

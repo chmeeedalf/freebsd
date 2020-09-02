@@ -36,7 +36,7 @@
 #include <sys/proc.h>
 #endif
 
-#define	EARLY_COUNTER	&__pcpu[0].pc_early_dummy_counter
+#define	EARLY_COUNTER	&bsp_pcpu.pc_early_dummy_counter
 
 #ifdef __powerpc64__
 
@@ -45,10 +45,11 @@
 
 #ifdef IN_SUBR_COUNTER_C
 static inline uint64_t
-counter_u64_read_one(uint64_t *p, int cpu)
+counter_u64_read_one(counter_u64_t c, int cpu)
 {
 
-	return (*(uint64_t *)((char *)p + UMA_PCPU_ALLOC_SIZE * cpu));
+	MPASS(c != EARLY_COUNTER);
+	return (*zpcpu_get_cpu(c, cpu));
 }
 
 static inline uint64_t
@@ -67,9 +68,11 @@ counter_u64_fetch_inline(uint64_t *p)
 static void
 counter_u64_zero_one_cpu(void *arg)
 {
+	counter_u64_t c;
 
-	*((uint64_t *)((char *)arg + UMA_PCPU_ALLOC_SIZE *
-	    PCPU_GET(cpuid))) = 0;
+	c = arg;
+	MPASS(c != EARLY_COUNTER);
+	*(zpcpu_get(c)) = 0;
 }
 
 static inline void
@@ -86,18 +89,8 @@ counter_u64_zero_inline(counter_u64_t c)
 static inline void
 counter_u64_add(counter_u64_t c, int64_t inc)
 {
-	uint64_t ccpu, old;
-
-	__asm __volatile("\n"
-      "1:\n\t"
-	    "mfsprg	%0, 0\n\t"
-	    "ldarx	%1, %0, %2\n\t"
-	    "add	%1, %1, %3\n\t"
-	    "stdcx.	%1, %0, %2\n\t"
-	    "bne-	1b"
-	    : "=&b" (ccpu), "=&r" (old)
-	    : "r" ((char *)c - (char *)&__pcpu[0]), "r" (inc)
-	    : "cr0", "memory");
+	KASSERT(IS_BSP() || c != EARLY_COUNTER, ("EARLY_COUNTER used on AP"));
+	zpcpu_add(c, inc);
 }
 
 #else	/* !64bit */
@@ -108,14 +101,15 @@ counter_u64_add(counter_u64_t c, int64_t inc)
 #ifdef IN_SUBR_COUNTER_C
 /* XXXKIB non-atomic 64bit read */
 static inline uint64_t
-counter_u64_read_one(uint64_t *p, int cpu)
+counter_u64_read_one(counter_u64_t p, int cpu)
 {
 
-	return (*(uint64_t *)((char *)p + UMA_PCPU_ALLOC_SIZE * cpu));
+	MPASS(p != EARLY_COUNTER);
+	return (*zpcpu_get_cpu(p, cpu));
 }
 
 static inline uint64_t
-counter_u64_fetch_inline(uint64_t *p)
+counter_u64_fetch_inline(counter_u64_t p)
 {
 	uint64_t r;
 	int i;
@@ -131,9 +125,11 @@ counter_u64_fetch_inline(uint64_t *p)
 static void
 counter_u64_zero_one_cpu(void *arg)
 {
+	counter_u64_t c;
 
-	*((uint64_t *)((char *)arg + UMA_PCPU_ALLOC_SIZE *
-	    PCPU_GET(cpuid))) = 0;
+	c = arg;
+	MPASS(c != EARLY_COUNTER);
+	*(zpcpu_get(c)) = 0;
 }
 
 static inline void

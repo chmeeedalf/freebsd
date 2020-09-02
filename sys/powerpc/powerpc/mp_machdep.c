@@ -50,6 +50,7 @@ __FBSDID("$FreeBSD$");
 #include <vm/vm_map.h>
 #include <vm/vm_extern.h>
 #include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -175,7 +176,7 @@ cpu_mp_start(void)
 		if (cpu.cr_cpuid != bsp.cr_cpuid) {
 			void *dpcpu;
 
-			pc = &__pcpu[cpu.cr_cpuid];
+			pc = cpudep_alloc_ap_cpu(&cpu);
 			dpcpu = (void *)kmem_malloc_domainset(DOMAINSET_PREF(domain),
 			    DPCPU_SIZE, M_WAITOK | M_ZERO);
 			pcpu_init(pc, cpu.cr_cpuid, sizeof(*pc));

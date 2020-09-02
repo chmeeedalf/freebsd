@@ -47,6 +47,10 @@ __FBSDID("$FreeBSD$");
 #include <machine/spr.h>
 #include <machine/trap.h>
 
+#include <vm/vm.h>
+#include <vm/vm_extern.h>
+#include <vm/vm_page.h>
+
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw_machdep.h>
 
@@ -426,4 +430,32 @@ cpudep_ap_setup()
 		    "suboptimal.\n");
 		break;
 	}
+}
+
+struct pcpu *
+cpudep_alloc_ap_cpu(struct cpuref *cpu)
+{
+	vm_page_t m;
+	vm_offset_t pc;
+	int domain;
+
+	if (vm_ndomains > 1)
+		domain = cpu->cr_domain;
+	else
+		domain = 0;
+
+	CTASSERT(sizeof(struct pcpu) <= PAGE_SIZE);
+	m = vm_page_alloc_domain(NULL, 0, domain,
+			VM_ALLOC_WIRED | VM_ALLOC_WAITOK |
+			VM_ALLOC_ZERO | VM_ALLOC_NOOBJ);
+	if (hw_direct_map)
+		pc = PHYS_TO_DMAP(VM_PAGE_TO_PHYS(m));
+	else {
+		pc = kva_alloc(sizeof(struct pcpu));
+		if (pc == 0)
+			panic("Out of KVA for PCPU!");
+		pmap_kenter((vm_offset_t)pc, VM_PAGE_TO_PHYS(m));
+	}
+
+	return ((struct pcpu *)pc);
 }

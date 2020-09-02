@@ -149,7 +149,7 @@ extern vm_paddr_t kernload;
 
 extern void *ap_pcpu;
 
-struct pcpu __pcpu[MAXCPU] __aligned(PAGE_SIZE);
+struct pcpu bsp_pcpu __aligned(PAGE_SIZE);
 static char init_kenv[2048];
 
 static struct trapframe frame0;
@@ -445,7 +445,7 @@ powerpc_init(vm_offset_t fdt, vm_offset_t toc, vm_offset_t ofentry, void *mdp,
 	 */
 	if (platform_smp_get_bsp(&bsp) != 0)
 		bsp.cr_cpuid = 0;
-	pc = &__pcpu[bsp.cr_cpuid];
+	pc = &bsp_pcpu;
 	__asm __volatile("mtsprg 0, %0" :: "r"(pc));
 	pcpu_init(pc, bsp.cr_cpuid, sizeof(struct pcpu));
 	pc->pc_curthread = &thread0;

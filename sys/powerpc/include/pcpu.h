@@ -171,6 +171,59 @@ __curthread(void)
 #define	PCPU_PTR(member)	(&pcpup->pc_ ## member)
 #define	PCPU_SET(member,value)	(pcpup->pc_ ## member = (value))
 
+#define	IS_BSP()		(pcpup == &bsp_pcpu)
+
+#define __zpcpu_add_4(base, n) do {					\
+	void *pcpu;							\
+	int tmp;							\
+	uint32_t word;							\
+	__asm __volatile("1:\n"						\
+	    "mfsprg	%0, 0\n\t"					\
+	    "lwz	%1, %3(%0)\n\t"					\
+	    "slwi	%1, %1, %4\n\t"					\
+	    "lwarx	%2, %1, %5\n\t"					\
+	    "add	%2, %2, %6\n\t"					\
+	    "stwcx.	%2, %1, %5\n\t"					\
+	    "bne	1b"						\
+	    : "=&b"(pcpu), "=&r"(tmp), "=&r"(word)			\
+	    : "K"(offsetof(struct pcpu, pc_cpuid)),			\
+	      "K"(PAGE_SHIFT), "r"(base), "r"(n)			\
+	    : "memory", "cc");						\
+} while (0)
+
+#ifdef __powerpc64__
+#define __zpcpu_add_8(base, n) do {					\
+	void *pcpu;							\
+	int tmp;							\
+	uint64_t word;							\
+	__asm __volatile("1:\n"						\
+	    "mfsprg	%0, 0\n\t"					\
+	    "lwz	%1, %3(%0)\n\t"					\
+	    "slwi	%1, %1, %4\n\t"					\
+	    "ldarx	%2, %1, %5\n\t"					\
+	    "add	%2, %2, %6\n\t"					\
+	    "stdcx.	%2, %1, %5\n\t"					\
+	    "bne	1b"						\
+	    : "=&b"(pcpu), "=&r"(tmp), "=&r"(word)			\
+	    : "K"(offsetof(struct pcpu, pc_cpuid)),			\
+	      "K"(PAGE_SHIFT), "r"(base), "r"(n), "r"(pcpu)		\
+	    : "memory", "cc");						\
+} while (0)
+#endif
+
+#define zpcpu_add(base, n) do {						\
+	__typeof(*base) __n = (n);					\
+	CTASSERT(sizeof(*base) == 4 || sizeof(*base) == 8);		\
+	switch (sizeof(*base)) {					\
+	case 4:								\
+		__zpcpu_add_4(base, __n);				\
+		break;							\
+	case 8:								\
+		__zpcpu_add_8(base, __n);				\
+		break;							\
+	}								\
+} while (0)
+
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PCPU_H_ */

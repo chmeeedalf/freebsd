@@ -49,6 +49,8 @@ extern void icache_inval(void);
 
 volatile void *ap_pcpu;
 
+struct pcpu *pcpus;
+
 uintptr_t
 cpudep_ap_bootstrap()
 {
@@ -94,4 +96,10 @@ cpudep_ap_bootstrap()
 void
 cpudep_ap_setup()
 {
+}
+
+struct pcpu *
+cpudep_alloc_ap_cpu(struct cpuref *cpu)
+{
+	return (&pcpus[cpu->cr_cpuid]);
 }

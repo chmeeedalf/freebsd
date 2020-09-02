@@ -60,6 +60,7 @@ void	cpudep_ap_early_bootstrap(void);
 uintptr_t cpudep_ap_bootstrap(void);
 void	cpudep_ap_setup(void);
 void	machdep_ap_bootstrap(void);
+struct pcpu *cpudep_alloc_ap_cpu(struct cpuref *);
 
 extern struct pcb stoppcbs[];
 
