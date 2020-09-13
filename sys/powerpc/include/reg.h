@@ -28,7 +28,23 @@ struct vmxreg {
 };
 
 struct dbreg {
-	unsigned int	junk;
+	union {
+		struct {
+			register_t	dbcr[7];
+			register_t	iac[8];
+			register_t	dac[2];
+			register_t	dvc[2];
+		} booke;
+		struct {
+			register_t	cfar;
+			register_t	ciabr;
+			register_t	dabr;
+			register_t	dabrx;
+			register_t	dawr;
+			register_t	dawrx;
+			register_t	iabr;
+		} aim;
+	};
 };
 
 #ifdef __LP64__

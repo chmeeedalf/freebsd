@@ -578,6 +578,20 @@ cpu_machine_check(struct thread *td, struct trapframe *frame, int *ucode)
 	return (SIGBUS);
 }
 
+int
+cpu_fill_dbregs(struct thread *td, struct dbreg *dbregs)
+{
+	/* TODO: Implement debug registers for AIM. */
+	return (ENOSYS);
+}
+
+int
+cpu_set_dbregs(struct thread *td, struct dbreg *dbregs)
+{
+	/* TODO: Implement debug registers for AIM. */
+	return (ENOSYS);
+}
+
 #ifndef __powerpc64__
 uint64_t
 va_to_vsid(pmap_t pm, vm_offset_t va)

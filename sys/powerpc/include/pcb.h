@@ -63,6 +63,7 @@ struct pcb {
 #define	PCB_HTM		0x20	/* Process had HTM initialized */
 #define	PCB_CFSCR	0x40	/* Process had FSCR updated */
 #define	PCB_VAS		0x80	/* Process is using the VAS */
+#define	PCB_DBREGS	0x100	/* Process is using debug registers */
 	struct fpu {
 		union {
 #if _BYTE_ORDER == _BIG_ENDIAN
@@ -112,6 +113,14 @@ struct pcb {
 		} aim;
 		struct {
 			register_t	dbcr0;
+			register_t	dbcr1;
+			register_t	dbcr2;
+			register_t	dbcr3;
+			register_t	dbcr4;
+			register_t	dbcr5;
+			register_t	dbcr6;
+			register_t	iac[8];
+			register_t	dac[2];
 		} booke;
 	} pcb_cpu;
 	vm_offset_t pcb_lastill;	/* Last illegal instruction */

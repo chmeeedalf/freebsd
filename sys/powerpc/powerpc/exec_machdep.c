@@ -662,8 +662,7 @@ fill_regs(struct thread *td, struct reg *regs)
 int
 fill_dbregs(struct thread *td, struct dbreg *dbregs)
 {
-	/* No debug registers on PowerPC */
-	return (ENOSYS);
+	return (cpu_fill_dbregs(td, dbregs));
 }
 
 int
@@ -700,8 +699,7 @@ set_regs(struct thread *td, struct reg *regs)
 int
 set_dbregs(struct thread *td, struct dbreg *dbregs)
 {
-	/* No debug registers on PowerPC */
-	return (ENOSYS);
+	return (cpu_set_dbregs(td, dbregs));
 }
 
 int

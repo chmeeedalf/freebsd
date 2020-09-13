@@ -431,6 +431,28 @@ cpu_halt(void)
 }
 
 int
+cpu_fill_dbregs(struct thread *td, struct dbreg *dbregs)
+{
+	struct pcb *pcb;
+
+	bzero(dbregs, sizeof(*dbregs));
+	if (td == NULL) {
+		dbregs->booke.dbcr[0] = mfspr(SPR_DBCR0);
+	} else {
+		pcb = td->td_pcb;
+		memcpy(dbregs, &pcb->pcb_cpu.booke, sizeof(*dbregs));
+	}
+
+	return (0);
+}
+
+int
+cpu_set_dbregs(struct thread *td, struct dbreg *dbregs)
+{
+	return (ENOSYS);
+}
+
+int
 ptrace_single_step(struct thread *td)
 {
 	struct trapframe *tf;

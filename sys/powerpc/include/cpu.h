@@ -134,6 +134,7 @@ get_cyclecount(void)
 extern char btext[];
 extern char etext[];
 
+struct dbreg;
 struct thread;
 
 #ifdef __powerpc64__
@@ -149,6 +150,8 @@ void	flush_disable_caches(void);
 void	fork_trampoline(void);
 void	swi_vm(void *);
 int	cpu_machine_check(struct thread *, struct trapframe *, int *);
+int	cpu_fill_dbregs(struct thread *, struct dbreg *);
+int	cpu_set_dbregs(struct thread *, struct dbreg *);
 
 
 #ifndef __powerpc64__
