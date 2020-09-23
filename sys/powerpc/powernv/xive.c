@@ -44,6 +44,7 @@ __FBSDID("$FreeBSD$");
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
+#include <vm/vm_page.h>
 
 #include <machine/bus.h>
 #include <machine/intr_machdep.h>
@@ -319,8 +320,11 @@ xive_attach(device_t dev)
 {
 	struct xive_softc *sc = device_get_softc(dev);
 	struct xive_cpu *xive_cpud;
+	struct pcpu *pc;
 	phandle_t phandle = ofw_bus_get_node(dev);
+	vm_page_t m;
 	int64_t vp_block;
+	vm_offset_t q;
 	int error;
 	int rid;
 	int i, order;
@@ -368,7 +372,8 @@ xive_attach(device_t dev)
 	 * what's needed at AP spawn time.
 	 */
 	CPU_FOREACH(i) {
-		vp_id = pcpu_find(i)->pc_hwref;
+		pc = pcpu_find(i);
+		vp_id = pc->pc_hwref;
 
 		xive_cpud = DPCPU_ID_PTR(i, xive_cpu_data);
 		xive_cpud->vp = vp_id + vp_block;
@@ -379,8 +384,11 @@ xive_attach(device_t dev)
 		xive_cpud->chip = be64toh(xive_cpud->chip);
 
 		/* Allocate the queue page and populate the queue state data. */
-		xive_cpud->queue.q_page = contigmalloc(PAGE_SIZE, M_XIVE,
-		    M_ZERO | M_WAITOK, 0, BUS_SPACE_MAXADDR, PAGE_SIZE, 0);
+		m = vm_page_alloc_domain(NULL, 0, pc->pc_domain,
+		    VM_ALLOC_WIRED | VM_ALLOC_WAITOK |
+		    VM_ALLOC_ZERO | VM_ALLOC_NOOBJ);
+		q = VM_PAGE_TO_PHYS(m);
+		xive_cpud->queue.q_page = (void *)PHYS_TO_DMAP(q);
 		xive_cpud->queue.q_size = 1 << PAGE_SHIFT;
 		xive_cpud->queue.q_mask =
 		    ((xive_cpud->queue.q_size / sizeof(int)) - 1);
@@ -391,7 +399,7 @@ xive_attach(device_t dev)
 			    OPAL_XIVE_VP_ENABLED, 0);
 		} while (error == OPAL_BUSY);
 		error = opal_call(OPAL_XIVE_SET_QUEUE_INFO, vp_id,
-		    XIVE_PRIORITY, vtophys(xive_cpud->queue.q_page), PAGE_SHIFT,
+		    XIVE_PRIORITY, q, PAGE_SHIFT,
 		    OPAL_XIVE_EQ_ALWAYS_NOTIFY | OPAL_XIVE_EQ_ENABLED);
 
 		do {
