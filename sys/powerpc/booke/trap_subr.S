@@ -672,6 +672,15 @@ INTERRUPT(int_performance_counter)
 
 
 /*****************************************************************************
+ * Directed Doorbell interrupt
+ ****************************************************************************/
+INTERRUPT(int_doorbell)
+	STANDARD_PROLOG(SPR_SPRG1, PC_TEMPSAVE, SPR_SRR0, SPR_SRR1)
+	FRAME_SETUP(SPR_SPRG1, PC_TEMPSAVE, EXC_DBELL)
+	b	trap_common
+
+
+/*****************************************************************************
  * Data TLB miss interrupt
  *
  * There can be nested TLB misses - while handling a TLB miss we reference

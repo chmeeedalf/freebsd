@@ -191,6 +191,7 @@ extern void *int_debug;
 extern void *int_debug_ed;
 extern void *int_vec;
 extern void *int_vecast;
+extern void *int_doorbell;
 #ifdef __SPE__
 extern void *int_spe_fpdata;
 extern void *int_spe_fpround;
@@ -278,6 +279,7 @@ ivor_setup(void)
 	case FSL_E5500:
 		SET_TRAP(SPR_IVOR7, int_fpu);
 		SET_TRAP(SPR_IVOR15, int_debug_ed);
+		SET_TRAP(SPR_IVOR36, int_doorbell);
 		break;
 	case FSL_E500v1:
 	case FSL_E500v2:

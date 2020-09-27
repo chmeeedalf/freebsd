@@ -124,6 +124,11 @@ powerpc_interrupt(struct trapframe *framep)
 		break;
 #endif
 
+	case EXC_DBELL:
+		/* Doorbells are IPIs */
+		powerpc_ipi_handle_doorbell(framep);
+		break;
+
 #ifdef POWERNV
 	case EXC_HMI:
 		if (hmi_handler != 0 && hmi_handler(framep) == 0)

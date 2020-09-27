@@ -36,6 +36,8 @@ __FBSDID("$FreeBSD$");
 #include <sys/bus.h>
 #include <sys/cpuset.h>
 #include <sys/domainset.h>
+#include <sys/interrupt.h>
+#include <sys/limits.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
@@ -68,6 +70,25 @@ volatile static u_int ap_letgo;
 volatile static u_quad_t ap_timebase;
 static struct mtx ap_boot_mtx;
 struct pcb stoppcbs[MAXCPU];
+
+/*
+ * Used for doorbell IPIs.
+ *
+ * Doorbell IPIs are more efficient than PIC IPIs.  We can bypass the PIC
+ * dispatch logic completely, saving several (tens? hundreds?) of clocks per
+ * IPI.
+ *
+ * Doorbells are only available on Book-E ISA 2.06 and later, or Book-S ISA 2.07
+ * and later, and is optional even in those cases.  However, the Book-E SoCs
+ * FreeBSD runs on that follow ISA 2.06 do implement the
+ * Embedded.ProcessorControl extension, and the ISA 2.07 Book-S processors
+ * FreeBSD runs on do all (POWER8, POWER9) support the extension.
+ */
+static uint64_t	ipi_doorbell_key;
+static struct intr_event *ipi_event;
+
+#define	DBELL_TYPE_E	0x00000000
+#define	DBELL_TYPE_S	0x28000000
 
 void
 machdep_ap_bootstrap(void)
@@ -156,6 +177,25 @@ cpu_mp_start(void)
 	KASSERT(error == 0, ("Don't know BSP"));
 
 	error = platform_smp_first_cpu(&cpu);
+
+	/*
+	 * On Book-E ISA 2.06, or Book-S ISA 2.07, and later, use msgsnd for
+	 * IPIs instead of going through the PIC.
+	 */
+	if (((cpu_features & PPC_FEATURE_BOOKE) &&
+	     (cpu_features & PPC_FEATURE_ARCH_2_06)) ||
+	     (!(cpu_features & PPC_FEATURE_BOOKE) &&
+	      (cpu_features2 & PPC_FEATURE2_ARCH_2_07))) {
+		intr_event_create(&ipi_event, NULL, 0, INT_MAX, NULL, NULL,
+		    NULL, NULL, "IPI");
+		intr_event_add_handler(ipi_event, "IPI", powerpc_ipi_handler,
+		    NULL, NULL, intr_priority(INTR_TYPE_MISC),
+		    INTR_TYPE_MISC | INTR_EXCL, NULL);
+		if (cpu_features & PPC_FEATURE_BOOKE)
+			ipi_doorbell_key = DBELL_TYPE_E;
+		else
+			ipi_doorbell_key = DBELL_TYPE_S;
+	}
 	while (!error) {
 		if (cpu.cr_cpuid >= MAXCPU) {
 			printf("SMP: cpu%d: skipped -- ID out of range\n",
@@ -342,6 +382,13 @@ powerpc_ipi_handler(void *arg)
 	return (FILTER_HANDLED);
 }
 
+/* Use a fake interrupt dispatch to setup the interrupt environment. */
+void
+powerpc_ipi_handle_doorbell(struct trapframe *frame)
+{
+	intr_event_handle(ipi_event, frame);
+}
+
 static void
 ipi_send(struct pcpu *pc, int ipi)
 {
@@ -350,8 +397,13 @@ ipi_send(struct pcpu *pc, int ipi)
 	    pc, pc->pc_cpuid, ipi);
 
 	atomic_set_32(&pc->pc_ipimask, (1 << ipi));
-	powerpc_sync();
-	PIC_IPI(root_pic, pc->pc_cpuid);
+	if (ipi_event != NULL) {
+		powerpc_sync();
+		/* "msgsnd %0" */
+		__asm __volatile (".long (0x7c00019c|(%0 << 11))" ::
+		    "r"(pc->pc_hwref | ipi_doorbell_key));
+	} else
+		PIC_IPI(root_pic, pc->pc_cpuid);
 
 	CTR1(KTR_SMP, "%s: sent", __func__);
 }

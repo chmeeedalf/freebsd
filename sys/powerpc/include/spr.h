@@ -813,6 +813,8 @@
 #define	SPR_IVOR33		0x211
 #define	SPR_IVOR34		0x212
 #define	SPR_IVOR35		0x213
+#define	SPR_IVOR36		0x214
+#define	SPR_IVOR37		0x215
 
 #define	SPR_MAS0		0x270	/* ..8 MMU Assist Register 0 Book-E/e500 */
 #define	SPR_MAS1		0x271	/* ..8 MMU Assist Register 1 Book-E/e500 */

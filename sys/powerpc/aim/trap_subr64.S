@@ -486,6 +486,20 @@ CNAME(hypertrapcode):
 	blrl				/* Branch to generichypertrap */
 CNAME(hypertrapcodeend):
 
+/* Same thing for traps setting HSRR0/HSRR1 */
+	.globl	CNAME(hyperdbelltrapcode),CNAME(hyperdbelltrapcodeend)
+	.p2align 3
+CNAME(hyperdbelltrapcode):
+	mtsprg1	%r1			/* save SP */
+	mflr	%r1			/* Save the old LR in r1 */
+	mtsprg2 %r1			/* And then in SPRG2 */
+	ld	%r1,TRAP_GENTRAP(0)
+	addi	%r1,%r1,(hyperdoorbelltrap-generictrap)
+	mtlr	%r1
+	li	%r1, 0xe0		/* How to get the vector from LR */
+	blrl				/* Branch to generichypertrap */
+CNAME(hyperdbelltrapcodeend):
+
 /*
  * For SLB misses: do special things for the kernel
  *
@@ -786,6 +800,8 @@ realtrap:
 	ld	%r1,PC_CURPCB(%r1)
 	b	s_trap
 
+hyperdoorbelltrap:
+	.long 0x7c0006ec		/* msgsync */
 /*
  * generictrap does some standard setup for trap handling to minimize
  * the code that need be installed in the actual vectors. It expects

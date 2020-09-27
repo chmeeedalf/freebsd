@@ -45,6 +45,7 @@ extern device_t root_pic;
 struct trapframe;
 
 driver_filter_t powerpc_ipi_handler;
+void	powerpc_ipi_handle_doorbell(struct trapframe *);
 
 void	intrcnt_add(const char *name, u_long **countp);
 

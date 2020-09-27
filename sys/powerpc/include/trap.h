@@ -84,6 +84,7 @@
 #define	EXC_VSX		0x0f40		/* VSX Unavailable */
 
 /* Power ISA 2.07+: */
+#define	EXC_DBELL	0x0e80		/* Directed Hypervisor Doorbell */
 #define	EXC_FAC		0x0f60		/* Facility Unavailable */
 #define	EXC_HFAC	0x0f80		/* Hypervisor Facility Unavailable */
 

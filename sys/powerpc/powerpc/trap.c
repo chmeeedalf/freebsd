@@ -137,6 +137,7 @@ static struct powerpc_exception powerpc_exceptions[] = {
 	{ EXC_TRC,	"trace" },
 	{ EXC_FPA,	"floating-point assist" },
 	{ EXC_DEBUG,	"debug" },
+	{ EXC_DBELL,	"doorbell" },
 	{ EXC_PERF,	"performance monitoring" },
 	{ EXC_VEC,	"altivec unavailable" },
 	{ EXC_VSX,	"vsx unavailable" },
