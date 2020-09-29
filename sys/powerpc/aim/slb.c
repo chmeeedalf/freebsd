@@ -295,10 +295,10 @@ allocate_user_vsid(pmap_t pm, uint64_t esid, int large)
 	struct slbtnode *ua, *next, *inter;
 	struct slb *slb;
 	int idx;
+	bool locked;
 
 	KASSERT(pm != kernel_pmap, ("Attempting to allocate a kernel VSID"));
 
-	PMAP_LOCK_ASSERT(pm, MA_OWNED);
 	vsid = moea64_get_unique_vsid();
 
 	slbv = vsid << SLBV_VSID_SHIFT;
@@ -306,6 +306,18 @@ allocate_user_vsid(pmap_t pm, uint64_t esid, int large)
 		slbv |= SLBV_L;
 
 	ua = pm->pm_slb_tree_root;
+
+	locked = PMAP_LOCKED(pm);
+
+	if (!locked) {
+		PMAP_LOCK(pm);
+		slb = user_va_to_slb_entry(pm, esid << ADDR_SR_SHFT);
+		if (slb != NULL) {
+			moea64_release_vsid(vsid);
+			vsid = (slb->slbv & SLBV_VSID_MASK) >> SLBV_VSID_SHIFT;
+			goto out;
+		}
+	}
 
 	/* Descend to the correct leaf or NULL pointer. */
 	for (;;) {
@@ -347,7 +359,11 @@ allocate_user_vsid(pmap_t pm, uint64_t esid, int large)
 	 * SLB mapping, so pre-spill this entry.
 	 */
 	eieio();
+out:
 	slb_insert_user(pm, slb);
+
+	if (!locked)
+		PMAP_UNLOCK(pm);
 
 	return (vsid);
 }

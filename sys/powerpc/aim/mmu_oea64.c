@@ -571,8 +571,6 @@ init_pvo_entry(struct pvo_entry *pvo, pmap_t pmap, vm_offset_t va)
 	uint64_t hash;
 	int shift;
 
-	PMAP_LOCK_ASSERT(pmap, MA_OWNED);
-
 	pvo->pvo_pmap = pmap;
 	va &= ~ADDR_POFF;
 	pvo->pvo_vaddr |= va;
@@ -1683,10 +1681,10 @@ moea64_enter(pmap_t pmap, vm_offset_t va, vm_page_t m,
 		pvo->pvo_vaddr |= PVO_MANAGED;
 	}
 
-	PV_LOCK(pa);
+	init_pvo_entry(pvo, pmap, va);
+
+	PV_PAGE_LOCK(m);
 	PMAP_LOCK(pmap);
-	if (pvo->pvo_pmap == NULL)
-		init_pvo_entry(pvo, pmap, va);
 
 	if (moea64_ps_enabled(pmap) &&
 	    (tpvo = moea64_pvo_find_va(pmap, va & ~HPT_SP_MASK)) != NULL &&
@@ -2185,11 +2183,11 @@ moea64_kenter_attr(vm_offset_t va, vm_paddr_t pa, vm_memattr_t ma)
 	pvo->pvo_pte.pa = (pa & ~ADDR_POFF) | moea64_calc_wimg(pa, ma);
 	pvo->pvo_vaddr |= PVO_WIRED;
 
+	init_pvo_entry(pvo, kernel_pmap, va);
 	PMAP_LOCK(kernel_pmap);
 	oldpvo = moea64_pvo_find_va(kernel_pmap, va);
 	if (oldpvo != NULL)
 		moea64_pvo_remove_from_pmap(oldpvo);
-	init_pvo_entry(pvo, kernel_pmap, va);
 	error = moea64_pvo_enter(pvo, NULL, NULL);
 	PMAP_UNLOCK(kernel_pmap);
 
