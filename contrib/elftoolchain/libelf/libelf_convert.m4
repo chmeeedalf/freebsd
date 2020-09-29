@@ -24,6 +24,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <assert.h>
 #include <libelf.h>
 #include <string.h>
@@ -967,8 +968,8 @@ _libelf_cvt_NOTE_tom(unsigned char *dst, size_t dsz, unsigned char *src,
 
 		sz = namesz + descsz;
 
-		if (count < sz || dsz < sz)	/* Buffers are too small. */
-			return (0);
+		if (count < sz || dsz < sz)	/* Buffers are too small, fudge it. */
+			sz = count = dsz = MIN(count, dsz);
 
 		(void) memcpy(dst, src, sz);
 
