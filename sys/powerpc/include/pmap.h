@@ -130,6 +130,7 @@ struct pvo_entry {
 	} pvo_pte;
 	pmap_t		pvo_pmap;		/* Owning pmap */
 	vm_offset_t	pvo_vaddr;		/* VA of entry */
+	vm_page_t	pvo_page;		/* vm_page */
 	uint64_t	pvo_vpn;		/* Virtual page number */
 };
 LIST_HEAD(pvo_head, pvo_entry);
