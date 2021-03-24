@@ -436,6 +436,8 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
   lwz     %r30,128(%r3)
   lwz     %r31,132(%r3)
 
+#ifdef __SPE__
+#else
   // restore float registers
   lfd     %f0, 160(%r3)
   lfd     %f1, 168(%r3)
@@ -542,6 +544,7 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
   LOAD_VECTOR_UNALIGNEDh(29)
   LOAD_VECTOR_UNALIGNEDh(30)
   LOAD_VECTOR_UNALIGNEDh(31)
+#endif
 
 Lnovec:
   lwz     %r0, 136(%r3)   // __cr

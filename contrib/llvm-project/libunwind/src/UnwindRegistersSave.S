@@ -608,6 +608,8 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   mfctr   %r0
   stw     %r0, 148(%r3)
 
+#ifdef __SPE__
+#else
   // save float registers
   stfd    %f0, 160(%r3)
   stfd    %f1, 168(%r3)
@@ -692,6 +694,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   SAVE_VECTOR_UNALIGNED(%v29, 424+0x1D0)
   SAVE_VECTOR_UNALIGNED(%v30, 424+0x1E0)
   SAVE_VECTOR_UNALIGNED(%v31, 424+0x1F0)
+#endif
 
   li      %r3, 0  // return UNW_ESUCCESS
   blr
