@@ -624,9 +624,8 @@ ale_attach(device_t dev)
 	if_setioctlfn(ifp, ale_ioctl);
 	if_setstartfn(ifp, ale_start);
 	if_setinitfn(ifp, ale_init);
-	if_setsnd.ifq_drv_maxlen(ifp, ALE_TX_RING_CNT - 1);
-	if_setsendqlen(ifp, ifp->if_snd.ifq_drv_maxlen); /* XXX - DRVAPI */
-	if_setsendqready(ifp); /* XXX - DRVAPI */
+	if_setsendqlen(ifp, ALE_TX_RING_CNT - 1);
+	if_setsendqready(ifp);
 	if_setcapabilities(ifp, IFCAP_RXCSUM | IFCAP_TXCSUM | IFCAP_TSO4);
 	if_sethwassist(ifp, ALE_CSUM_FEATURES | CSUM_TSO);
 	if (pci_find_cap(dev, PCIY_PMG, &pmc) == 0) {
@@ -1898,8 +1897,8 @@ ale_start_locked(if_t ifp)
 	    IFF_DRV_RUNNING || (sc->ale_flags & ALE_FLAG_LINK) == 0)
 		return;
 
-	for (enq = 0; !if_sendq_empty(ifp); ) { /* XXX - DRVAPI */
-		m_head = if_dequeue(ifp); /* XXX - DRVAPI */
+	for (enq = 0; !if_sendq_empty(ifp); ) {
+		m_head = if_dequeue(ifp);
 		if (m_head == NULL)
 			break;
 		/*
@@ -1910,7 +1909,7 @@ ale_start_locked(if_t ifp)
 		if (ale_encap(sc, &m_head)) {
 			if (m_head == NULL)
 				break;
-			if_sendq_prepend(ifp, m_head); /* XXX - DRVAPI */
+			if_sendq_prepend(ifp, m_head);
 			if_setdrvflagbits(ifp, IFF_DRV_OACTIVE, 0);
 			break;
 		}
@@ -1954,7 +1953,7 @@ ale_watchdog(struct ale_softc *sc)
 	if_inc_counter(ifp, IFCOUNTER_OERRORS, 1);
 	if_setdrvflagbits(ifp, 0, IFF_DRV_RUNNING);
 	ale_init_locked(sc);
-	if (!if_sendq_empty(ifp)) /* XXX - DRVAPI */
+	if (!if_sendq_empty(ifp))
 		ale_start_locked(ifp);
 }
 
@@ -2279,7 +2278,7 @@ ale_int_task(void *arg, int pending)
 			ALE_UNLOCK(sc);
 			return;
 		}
-		if (!if_sendq_empty(ifp)) /* XXX - DRVAPI */
+		if (!if_sendq_empty(ifp))
 			ale_start_locked(ifp);
 	}
 
@@ -2549,7 +2548,7 @@ ale_rxeof(struct ale_softc *sc, int count)
 
 		/* Pass it to upper layer. */
 		ALE_UNLOCK(sc);
-		if_input(ifp, m); /* XXX - DRVAPI */
+		if_input(ifp, m);
 		ALE_LOCK(sc);
 
 		ale_rx_update_page(sc, &rx_page, length, &prod);
