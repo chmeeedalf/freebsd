@@ -211,7 +211,7 @@ struct rt_softc
 	bus_space_tag_t	 bst;
 	bus_space_handle_t bsh;
 
-	struct ifnet	*ifp;
+	if_t		 ifp;
 	int 		 if_flags;
 	struct ifmedia	 rt_ifmedia;
 
