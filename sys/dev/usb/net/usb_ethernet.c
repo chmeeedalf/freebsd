@@ -265,7 +265,7 @@ ue_attach_post_task(struct usb_proc_msg *_task)
 	ether_ifattach(ifp, ue->ue_eaddr);
 	/* Tell upper layer we support VLAN oversized frames. */
 	if (if_getcapabilities(ifp) & IFCAP_VLAN_MTU)
-		if_sethdrlen(ifp, sizeof(struct ether_vlan_header));
+		if_setifheaderlen(ifp, sizeof(struct ether_vlan_header));
 
 	CURVNET_RESTORE();
 
