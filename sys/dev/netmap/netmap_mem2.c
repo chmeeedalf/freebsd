@@ -2116,13 +2116,13 @@ netmap_mem2_if_new(struct netmap_mem_d *nmd,
 	}
 
 	/* initialize base fields -- override const */
-	*(u_int *)(uintptr_t)&nifp->ni_tx_rings = na->num_tx_rings;
-	*(u_int *)(uintptr_t)&nifp->ni_rx_rings = na->num_rx_rings;
-	*(u_int *)(uintptr_t)&nifp->ni_host_tx_rings =
+	*(u_int *)(uintptr_t)&nifp->ni_tx_rings = na->num_tx_rings; /* XXX - DRVAPI */
+	*(u_int *)(uintptr_t)&nifp->ni_rx_rings = na->num_rx_rings; /* XXX - DRVAPI */
+	*(u_int *)(uintptr_t)&nifp->ni_host_tx_rings = /* XXX - DRVAPI */
 		(na->num_host_tx_rings ? na->num_host_tx_rings : 1);
-	*(u_int *)(uintptr_t)&nifp->ni_host_rx_rings =
+	*(u_int *)(uintptr_t)&nifp->ni_host_rx_rings = /* XXX - DRVAPI */
 		(na->num_host_rx_rings ? na->num_host_rx_rings : 1);
-	strlcpy(nifp->ni_name, na->name, sizeof(nifp->ni_name));
+	strlcpy(nifp->ni_name, na->name, sizeof(nifp->ni_name)); /* XXX - DRVAPI */
 
 	/*
 	 * fill the slots for the rx and tx rings. They contain the offset
@@ -2140,7 +2140,7 @@ netmap_mem2_if_new(struct netmap_mem_d *nmd,
 			ofs = netmap_ring_offset(nmd,
 						 na->tx_rings[i]->ring) - base;
 		}
-		*(ssize_t *)(uintptr_t)&nifp->ring_ofs[i] = ofs;
+		*(ssize_t *)(uintptr_t)&nifp->ring_ofs[i] = ofs; /* XXX - DRVAPI */
 	}
 	for (i = 0; i < n[NR_RX]; i++) {
 		/* XXX instead of ofs == 0 maybe use the offset of an error
@@ -2152,7 +2152,7 @@ netmap_mem2_if_new(struct netmap_mem_d *nmd,
 			ofs = netmap_ring_offset(nmd,
 						 na->rx_rings[i]->ring) - base;
 		}
-		*(ssize_t *)(uintptr_t)&nifp->ring_ofs[i+n[NR_TX]] = ofs;
+		*(ssize_t *)(uintptr_t)&nifp->ring_ofs[i+n[NR_TX]] = ofs; /* XXX - DRVAPI */
 	}
 
 	return (nifp);
@@ -2165,8 +2165,8 @@ netmap_mem2_if_delete(struct netmap_mem_d *nmd,
 	if (nifp == NULL)
 		/* nothing to do */
 		return;
-	if (nifp->ni_bufs_head)
-		netmap_extra_free(na, nifp->ni_bufs_head);
+	if (nifp->ni_bufs_head) /* XXX - DRVAPI */
+		netmap_extra_free(na, nifp->ni_bufs_head); /* XXX - DRVAPI */
 	netmap_if_free(nmd, nifp);
 }
 
@@ -2476,7 +2476,7 @@ out:
 #ifdef WITH_PTNETMAP
 struct mem_pt_if {
 	struct mem_pt_if *next;
-	struct ifnet *ifp;
+	if_t ifp;
 	unsigned int nifp_offset;
 };
 
@@ -2494,7 +2494,7 @@ struct netmap_mem_ptg {
 
 /* Link a passthrough interface to a passthrough netmap allocator. */
 static int
-netmap_mem_pt_guest_ifp_add(struct netmap_mem_d *nmd, struct ifnet *ifp,
+netmap_mem_pt_guest_ifp_add(struct netmap_mem_d *nmd, if_t ifp,
 			    unsigned int nifp_offset)
 {
 	struct netmap_mem_ptg *ptnmd = (struct netmap_mem_ptg *)nmd;
@@ -2517,14 +2517,14 @@ netmap_mem_pt_guest_ifp_add(struct netmap_mem_d *nmd, struct ifnet *ifp,
 	NMA_UNLOCK(nmd);
 
 	nm_prinf("ifp=%s,nifp_offset=%u",
-		ptif->ifp->if_xname, ptif->nifp_offset);
+		ptif->if_getxname(ifp), ptif->nifp_offset);
 
 	return 0;
 }
 
 /* Called with NMA_LOCK(nmd) held. */
 static struct mem_pt_if *
-netmap_mem_pt_guest_ifp_lookup(struct netmap_mem_d *nmd, struct ifnet *ifp)
+netmap_mem_pt_guest_ifp_lookup(struct netmap_mem_d *nmd, if_t ifp)
 {
 	struct netmap_mem_ptg *ptnmd = (struct netmap_mem_ptg *)nmd;
 	struct mem_pt_if *curr;
@@ -2540,7 +2540,7 @@ netmap_mem_pt_guest_ifp_lookup(struct netmap_mem_d *nmd, struct ifnet *ifp)
 
 /* Unlink a passthrough interface from a passthrough netmap allocator. */
 int
-netmap_mem_pt_guest_ifp_del(struct netmap_mem_d *nmd, struct ifnet *ifp)
+netmap_mem_pt_guest_ifp_del(struct netmap_mem_d *nmd, if_t ifp)
 {
 	struct netmap_mem_ptg *ptnmd = (struct netmap_mem_ptg *)nmd;
 	struct mem_pt_if *prev = NULL;
@@ -2557,7 +2557,7 @@ netmap_mem_pt_guest_ifp_del(struct netmap_mem_d *nmd, struct ifnet *ifp)
 				ptnmd->pt_ifs = curr->next;
 			}
 			nm_prinf("removed (ifp=%s,nifp_offset=%u)",
-			  curr->ifp->if_xname, curr->nifp_offset);
+			  curr->if_getxname(ifp), curr->nifp_offset);
 			nm_os_free(curr);
 			ret = 0;
 			break;
@@ -2793,7 +2793,7 @@ netmap_mem_pt_guest_rings_create(struct netmap_mem_d *nmd,
 		if (kring->ring)
 			continue;
 		kring->ring = (struct netmap_ring *)
-			((char *)nifp + nifp->ring_ofs[i]);
+			((char *)nifp + nifp->ring_ofs[i]); /* XXX - DRVAPI */
 	}
 	for (i = 0; i < netmap_all_rings(na, NR_RX); i++) {
 		struct netmap_kring *kring = na->rx_rings[i];
@@ -2801,7 +2801,7 @@ netmap_mem_pt_guest_rings_create(struct netmap_mem_d *nmd,
 			continue;
 		kring->ring = (struct netmap_ring *)
 			((char *)nifp +
-			 nifp->ring_ofs[netmap_all_rings(na, NR_TX) + i]);
+			 nifp->ring_ofs[netmap_all_rings(na, NR_TX) + i]); /* XXX - DRVAPI */
 	}
 
 	error = 0;
@@ -2949,7 +2949,7 @@ netmap_mem_pt_guest_attach(struct ptnetmap_memdev *ptn_dev, nm_memid_t mem_id)
 
 /* Called when ptnet device is attaching */
 struct netmap_mem_d *
-netmap_mem_pt_guest_new(struct ifnet *ifp,
+netmap_mem_pt_guest_new(if_t ifp,
 			unsigned int nifp_offset,
 			unsigned int memid)
 {

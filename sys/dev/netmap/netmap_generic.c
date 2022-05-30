@@ -104,10 +104,10 @@ __FBSDID("$FreeBSD$");
 #include <linux/hrtimer.h>
 
 static inline struct mbuf *
-nm_os_get_mbuf(struct ifnet *ifp, int len)
+nm_os_get_mbuf(if_t ifp, int len)
 {
 	return alloc_skb(LL_RESERVED_SPACE(ifp) + len +
-			 ifp->needed_tailroom, GFP_ATOMIC);
+			 ifp->needed_tailroom, GFP_ATOMIC); /* XXX - DRVAPI */
 }
 
 #endif /* linux */
@@ -651,7 +651,7 @@ generic_netmap_txsync(struct netmap_kring *kring, int flags)
 {
 	struct netmap_adapter *na = kring->na;
 	struct netmap_generic_adapter *gna = (struct netmap_generic_adapter *)na;
-	struct ifnet *ifp = na->ifp;
+	if_t ifp = na->ifp;
 	struct netmap_ring *ring = kring->ring;
 	u_int nm_i;	/* index into the netmap ring */ // j
 	u_int const lim = kring->nkr_num_slots - 1;
@@ -815,7 +815,7 @@ generic_netmap_txsync(struct netmap_kring *kring, int flags)
  * Returns 1 if the packet was stolen, 0 otherwise.
  */
 int
-generic_rx_handler(struct ifnet *ifp, struct mbuf *m)
+generic_rx_handler(if_t ifp, struct mbuf *m)
 {
 	struct netmap_adapter *na = NA(ifp);
 	struct netmap_generic_adapter *gna = (struct netmap_generic_adapter *)na;
@@ -1021,7 +1021,7 @@ static void
 generic_netmap_dtor(struct netmap_adapter *na)
 {
 	struct netmap_generic_adapter *gna = (struct netmap_generic_adapter*)na;
-	struct ifnet *ifp = netmap_generic_getifp(gna);
+	if_t ifp = netmap_generic_getifp(gna);
 	struct netmap_adapter *prev_na = gna->prev;
 
 	if (prev_na != NULL) {
@@ -1062,7 +1062,7 @@ na_is_generic(struct netmap_adapter *na)
  * actual configuration.
  */
 int
-generic_netmap_attach(struct ifnet *ifp)
+generic_netmap_attach(if_t ifp)
 {
 	struct netmap_adapter *na;
 	struct netmap_generic_adapter *gna;
@@ -1070,7 +1070,7 @@ generic_netmap_attach(struct ifnet *ifp)
 	u_int num_tx_desc, num_rx_desc;
 
 #ifdef __FreeBSD__
-	if (ifp->if_type == IFT_LOOP) {
+	if (ifp->if_type == IFT_LOOP) { /* XXX - DRVAPI */
 		nm_prerr("if_loop is not supported by %s", __func__);
 		return EINVAL;
 	}
@@ -1099,7 +1099,7 @@ generic_netmap_attach(struct ifnet *ifp)
 		return ENOMEM;
 	}
 	na = (struct netmap_adapter *)gna;
-	strlcpy(na->name, ifp->if_xname, sizeof(na->name));
+	strlcpy(na->name, if_getxname(ifp), sizeof(na->name));
 	na->ifp = ifp;
 	na->num_tx_desc = num_tx_desc;
 	na->num_rx_desc = num_rx_desc;
@@ -1114,10 +1114,10 @@ generic_netmap_attach(struct ifnet *ifp)
 	na->na_flags = NAF_SKIP_INTR | NAF_HOST_RINGS;
 
 	nm_prdis("[GNA] num_tx_queues(%d), real_num_tx_queues(%d), len(%lu)",
-			ifp->num_tx_queues, ifp->real_num_tx_queues,
-			ifp->tx_queue_len);
+			ifp->num_tx_queues, ifp->real_num_tx_queues, /* XXX - DRVAPI */
+			ifp->tx_queue_len); /* XXX - DRVAPI */
 	nm_prdis("[GNA] num_rx_queues(%d), real_num_rx_queues(%d)",
-			ifp->num_rx_queues, ifp->real_num_rx_queues);
+			ifp->num_rx_queues, ifp->real_num_rx_queues); /* XXX - DRVAPI */
 
 	nm_os_generic_find_num_queues(ifp, &na->num_tx_rings, &na->num_rx_rings);
 
