@@ -77,7 +77,7 @@ typedef struct e6000sw_softc {
 	phandle_t		node;
 
 	struct sx		sx;
-	struct ifnet		*ifp[E6000SW_MAX_PORTS];
+	if_t ifp[E6000SW_MAX_PORTS];
 	char			*ifname[E6000SW_MAX_PORTS];
 	device_t		miibus[E6000SW_MAX_PORTS];
 	struct taskqueue	*sc_tq;
@@ -136,8 +136,8 @@ static int e6000sw_vtu_flush(e6000sw_softc_t *);
 static int e6000sw_vtu_update(e6000sw_softc_t *, int, int, int, int, int);
 static __inline void e6000sw_writereg(e6000sw_softc_t *, int, int, int);
 static __inline uint32_t e6000sw_readreg(e6000sw_softc_t *, int, int);
-static int e6000sw_ifmedia_upd(struct ifnet *);
-static void e6000sw_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static int e6000sw_ifmedia_upd(if_t );
+static void e6000sw_ifmedia_sts(if_t , struct ifmediareq *);
 static int e6000sw_atu_mac_table(device_t, e6000sw_softc_t *, struct atu_opt *,
     int);
 static int e6000sw_get_pvid(e6000sw_softc_t *, int, int *);
@@ -1280,13 +1280,13 @@ e6000sw_miiforphy(e6000sw_softc_t *sc, unsigned int phy)
 }
 
 static int
-e6000sw_ifmedia_upd(struct ifnet *ifp)
+e6000sw_ifmedia_upd(if_t ifp)
 {
 	e6000sw_softc_t *sc;
 	struct mii_data *mii;
 
-	sc = ifp->if_softc;
-	mii = e6000sw_miiforphy(sc, ifp->if_dunit);
+	sc = if_getsoftc(ifp);
+	mii = e6000sw_miiforphy(sc, ifp->if_dunit); /* XXX - DRVAPI */
 	if (mii == NULL)
 		return (ENXIO);
 	mii_mediachg(mii);
@@ -1295,13 +1295,13 @@ e6000sw_ifmedia_upd(struct ifnet *ifp)
 }
 
 static void
-e6000sw_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+e6000sw_ifmedia_sts(if_t ifp, struct ifmediareq *ifmr)
 {
 	e6000sw_softc_t *sc;
 	struct mii_data *mii;
 
-	sc = ifp->if_softc;
-	mii = e6000sw_miiforphy(sc, ifp->if_dunit);
+	sc = if_getsoftc(ifp);
+	mii = e6000sw_miiforphy(sc, ifp->if_dunit); /* XXX - DRVAPI */
 
 	if (mii == NULL)
 		return;
