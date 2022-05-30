@@ -237,7 +237,7 @@ t4_connect(struct toedev *tod, struct socket *so, struct nhop_object *nh,
 	struct adapter *sc = tod->tod_softc;
 	struct toepcb *toep = NULL;
 	struct wrqe *wr = NULL;
-	struct ifnet *rt_ifp = nh->nh_ifp;
+	if_t rt_ifp = nh->nh_ifp;
 	struct vi_info *vi;
 	int qid_atid, rc, isipv6;
 	struct inpcb *inp = sotoinpcb(so);
@@ -254,11 +254,11 @@ t4_connect(struct toedev *tod, struct socket *so, struct nhop_object *nh,
 	    ("%s: dest addr %p has family %u", __func__, nam, nam->sa_family));
 
 	if (rt_ifp->if_type == IFT_ETHER)
-		vi = rt_ifp->if_softc;
+		vi = if_getsoftc(rt_ifp);
 	else if (rt_ifp->if_type == IFT_L2VLAN) {
-		struct ifnet *ifp = VLAN_TRUNKDEV(rt_ifp);
+		if_t ifp = VLAN_TRUNKDEV(rt_ifp);
 
-		vi = ifp->if_softc;
+		vi = if_getsoftc(ifp);
 		VLAN_TAG(rt_ifp, &vid);
 		VLAN_PCP(rt_ifp, &pcp);
 	} else if (rt_ifp->if_type == IFT_IEEE8023ADLAG)

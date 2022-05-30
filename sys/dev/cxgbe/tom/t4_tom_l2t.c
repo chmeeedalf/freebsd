@@ -351,7 +351,7 @@ do_l2t_write_rpl2(struct sge_iq *iq, const struct rss_header *rss,
  * top of the real cxgbe interface.
  */
 struct l2t_entry *
-t4_l2t_get(struct port_info *pi, struct ifnet *ifp, struct sockaddr *sa)
+t4_l2t_get(struct port_info *pi, if_t ifp, struct sockaddr *sa)
 {
 	struct l2t_entry *e;
 	struct adapter *sc = pi->adapter;
@@ -365,16 +365,16 @@ t4_l2t_get(struct port_info *pi, struct ifnet *ifp, struct sockaddr *sa)
 
 	vid = VLAN_NONE;
 	pcp = 0;
-	if (ifp->if_type == IFT_L2VLAN) {
+	if (ifp->if_type == IFT_L2VLAN) { /* XXX - DRVAPI */
 		VLAN_TAG(ifp, &vid);
 		VLAN_PCP(ifp, &pcp);
-	} else if (ifp->if_pcp != IFNET_PCP_NONE) {
+	} else if (ifp->if_pcp != IFNET_PCP_NONE) { /* XXX - DRVAPI */
 		vid = 0;
-		pcp = ifp->if_pcp;
+		pcp = ifp->if_pcp; /* XXX - DRVAPI */
 	}
 	vtag = EVL_MAKETAG(vid, pcp, 0);
 
-	hash = l2_hash(d, sa, ifp->if_index);
+	hash = l2_hash(d, sa, if_getindex(ifp));
 	rw_wlock(&d->lock);
 	for (e = d->l2tab[hash].first; e; e = e->next) {
 		if (l2_cmp(sa, e) == 0 && e->ifp == ifp && e->vlan == vtag &&
@@ -413,7 +413,7 @@ done:
  * into the HW L2 table.
  */
 void
-t4_l2_update(struct toedev *tod, struct ifnet *ifp, struct sockaddr *sa,
+t4_l2_update(struct toedev *tod, if_t ifp, struct sockaddr *sa,
     uint8_t *lladdr, uint16_t vtag)
 {
 	struct adapter *sc = tod->tod_softc;
@@ -423,7 +423,7 @@ t4_l2_update(struct toedev *tod, struct ifnet *ifp, struct sockaddr *sa,
 
 	KASSERT(d != NULL, ("%s: no L2 table", __func__));
 
-	hash = l2_hash(d, sa, ifp->if_index);
+	hash = l2_hash(d, sa, if_getindex(ifp));
 	rw_rlock(&d->lock);
 	for (e = d->l2tab[hash].first; e; e = e->next) {
 		if (l2_cmp(sa, e) == 0 && e->ifp == ifp) {
