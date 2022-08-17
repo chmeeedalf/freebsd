@@ -64,7 +64,7 @@ static void mlx4_en_sysctl_conf(struct mlx4_en_priv *priv);
 static int mlx4_en_low_latency_recv(struct napi_struct *napi)
 {
 	struct mlx4_en_cq *cq = container_of(napi, struct mlx4_en_cq, napi);
-	struct ifnet *dev = cq->dev;
+	if_t dev = cq->dev;
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_rx_ring *rx_ring = priv->rx_ring[cq->ring];
 	int done;
@@ -288,7 +288,7 @@ mlx4_en_filter_find(struct mlx4_en_priv *priv, __be32 src_ip, __be32 dst_ip,
 }
 
 static int
-mlx4_en_filter_rfs(struct ifnet *net_dev, const struct sk_buff *skb,
+mlx4_en_filter_rfs(if_t net_dev, const struct sk_buff *skb,
 		   u16 rxq_index, u32 flow_id)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(net_dev);
@@ -400,7 +400,7 @@ static void mlx4_en_filter_rfs_expire(struct mlx4_en_priv *priv)
 }
 #endif
 
-static void mlx4_en_vlan_rx_add_vid(void *arg, struct ifnet *dev, u16 vid)
+static void mlx4_en_vlan_rx_add_vid(void *arg, if_t dev, u16 vid)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -427,7 +427,7 @@ static void mlx4_en_vlan_rx_add_vid(void *arg, struct ifnet *dev, u16 vid)
 
 }
 
-static void mlx4_en_vlan_rx_kill_vid(void *arg, struct ifnet *dev, u16 vid)
+static void mlx4_en_vlan_rx_kill_vid(void *arg, if_t dev, u16 vid)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -558,15 +558,15 @@ static int mlx4_en_get_qp(struct mlx4_en_priv *priv)
 	int index = 0;
 	int err = 0;
 	int *qpn = &priv->base_qpn;
-	u64 mac = mlx4_mac_to_u64(IF_LLADDR(priv->dev));
+	u64 mac = mlx4_mac_to_u64(if_getlladdr(priv->dev));
 
 	en_dbg(DRV, priv, "Registering MAC: %pM for adding\n",
-	       IF_LLADDR(priv->dev));
+	       if_getlladdr(priv->dev));
 	index = mlx4_register_mac(dev, priv->port, mac);
 	if (index < 0) {
 		err = index;
 		en_err(priv, "Failed adding MAC: %pM\n",
-		       IF_LLADDR(priv->dev));
+		       if_getlladdr(priv->dev));
 		return err;
 	}
 
@@ -594,9 +594,9 @@ static void mlx4_en_put_qp(struct mlx4_en_priv *priv)
 	int qpn = priv->base_qpn;
 
 	if (dev->caps.steering_mode == MLX4_STEERING_MODE_A0) {
-		u64 mac = mlx4_mac_to_u64(IF_LLADDR(priv->dev));
+		u64 mac = mlx4_mac_to_u64(if_getlladdr(priv->dev));
 		en_dbg(DRV, priv, "Registering MAC: %pM for deleting\n",
-		       IF_LLADDR(priv->dev));
+		       if_getlladdr(priv->dev));
 		mlx4_unregister_mac(dev, priv->port, mac);
 	} else {
 		en_dbg(DRV, priv, "Releasing qp: port %d, qpn %d\n",
@@ -606,7 +606,7 @@ static void mlx4_en_put_qp(struct mlx4_en_priv *priv)
 	}
 }
 
-static void mlx4_en_clear_uclist(struct ifnet *dev)
+static void mlx4_en_clear_uclist(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_addr_list *tmp, *uc_to_del;
@@ -635,7 +635,7 @@ static u_int mlx4_copy_addr(void *arg, struct sockaddr_dl *sdl, u_int cnt)
 	return (1);
 }
 
-static void mlx4_en_cache_uclist(struct ifnet *dev)
+static void mlx4_en_cache_uclist(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 
@@ -643,7 +643,7 @@ static void mlx4_en_cache_uclist(struct ifnet *dev)
 	if_foreach_lladdr(dev, mlx4_copy_addr, priv);
 }
 
-static void mlx4_en_clear_mclist(struct ifnet *dev)
+static void mlx4_en_clear_mclist(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_addr_list *tmp, *mc_to_del;
@@ -671,7 +671,7 @@ static u_int mlx4_copy_maddr(void *arg, struct sockaddr_dl *sdl, u_int count)
 	return (1);
 }
 
-static void mlx4_en_cache_mclist(struct ifnet *dev)
+static void mlx4_en_cache_mclist(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 
@@ -728,7 +728,7 @@ static void update_addr_list_flags(struct mlx4_en_priv *priv,
 	}
 }
 
-static void mlx4_en_set_rx_mode(struct ifnet *dev)
+static void mlx4_en_set_rx_mode(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 
@@ -842,7 +842,7 @@ static void mlx4_en_clear_promisc_mode(struct mlx4_en_priv *priv,
 }
 
 static void mlx4_en_do_multicast(struct mlx4_en_priv *priv,
-				 struct ifnet *dev,
+				 if_t dev,
 				 struct mlx4_en_dev *mdev)
 {
 	struct mlx4_en_addr_list *addr_list, *tmp;
@@ -977,7 +977,7 @@ static void mlx4_en_do_multicast(struct mlx4_en_priv *priv,
 }
 
 static void mlx4_en_do_unicast(struct mlx4_en_priv *priv,
-			       struct ifnet *dev,
+			       if_t dev,
 			       struct mlx4_en_dev *mdev)
 {
 	struct mlx4_en_addr_list *addr_list, *tmp;
@@ -1011,7 +1011,7 @@ static void mlx4_en_do_set_rx_mode(struct work_struct *work)
 	struct mlx4_en_priv *priv = container_of(work, struct mlx4_en_priv,
 						 rx_mode_task);
 	struct mlx4_en_dev *mdev = priv->mdev;
-	struct ifnet *dev = priv->dev;
+	if_t dev = priv->dev;
 
 	mutex_lock(&mdev->state_lock);
 	if (!mdev->device_up) {
@@ -1258,7 +1258,7 @@ static void mlx4_en_linkstate(struct work_struct *work)
 }
 
 
-int mlx4_en_start_port(struct ifnet *dev)
+int mlx4_en_start_port(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -1451,7 +1451,7 @@ cq_err:
 }
 
 
-void mlx4_en_stop_port(struct ifnet *dev)
+void mlx4_en_stop_port(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -1568,7 +1568,7 @@ static void mlx4_en_restart(struct work_struct *work)
 	struct mlx4_en_priv *priv = container_of(work, struct mlx4_en_priv,
 						 watchdog_task);
 	struct mlx4_en_dev *mdev = priv->mdev;
-	struct ifnet *dev = priv->dev;
+	if_t dev = priv->dev;
 	struct mlx4_en_tx_ring *ring;
 	int i;
 
@@ -1601,7 +1601,7 @@ reset:
 	mutex_unlock(&mdev->state_lock);
 }
 
-static void mlx4_en_clear_stats(struct ifnet *dev)
+static void mlx4_en_clear_stats(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -1635,7 +1635,7 @@ static void mlx4_en_open(void* arg)
 
         struct mlx4_en_priv *priv;
         struct mlx4_en_dev *mdev;
-        struct ifnet *dev;
+        if_t dev;
         int err = 0;
 
         priv = arg;
@@ -1760,7 +1760,7 @@ struct en_port_attribute en_port_attr_##_name = __ATTR_RO(_name)
 #define EN_PORT_ATTR(_name, _mode, _show, _store) \
 struct en_port_attribute en_port_attr_##_name = __ATTR(_name, _mode, _show, _store)
 
-void mlx4_en_destroy_netdev(struct ifnet *dev)
+void mlx4_en_destroy_netdev(if_t dev)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -1815,7 +1815,7 @@ void mlx4_en_destroy_netdev(struct ifnet *dev)
 
 }
 
-static int mlx4_en_change_mtu(struct ifnet *dev, int new_mtu)
+static int mlx4_en_change_mtu(if_t dev, int new_mtu)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
 	struct mlx4_en_dev *mdev = priv->mdev;
@@ -1886,7 +1886,7 @@ static int mlx4_en_calc_media(struct mlx4_en_priv *priv)
 	return (active);
 }
 
-static void mlx4_en_media_status(struct ifnet *dev, struct ifmediareq *ifmr)
+static void mlx4_en_media_status(if_t dev, struct ifmediareq *ifmr)
 {
 	struct mlx4_en_priv *priv;
 
@@ -1899,7 +1899,7 @@ static void mlx4_en_media_status(struct ifnet *dev, struct ifmediareq *ifmr)
 	return;
 }
 
-static int mlx4_en_media_change(struct ifnet *dev)
+static int mlx4_en_media_change(if_t dev)
 {
 	struct mlx4_en_priv *priv;
         struct ifmedia *ifm;
@@ -1946,7 +1946,7 @@ static int mlx4_en_media_change(struct ifnet *dev)
 	return (error);
 }
 
-static int mlx4_en_ioctl(struct ifnet *dev, u_long command, caddr_t data)
+static int mlx4_en_ioctl(if_t dev, u_long command, caddr_t data)
 {
 	struct mlx4_en_priv *priv;
 	struct mlx4_en_dev *mdev;
@@ -2137,7 +2137,7 @@ out:
 int mlx4_en_init_netdev(struct mlx4_en_dev *mdev, int port,
 			struct mlx4_en_port_profile *prof)
 {
-	struct ifnet *dev;
+	if_t dev;
 	struct mlx4_en_priv *priv;
 	uint8_t dev_addr[ETHER_ADDR_LEN];
 	int err;
@@ -2350,7 +2350,7 @@ out:
 	return err;
 }
 
-static int mlx4_en_set_ring_size(struct ifnet *dev,
+static int mlx4_en_set_ring_size(if_t dev,
     int rx_size, int tx_size)
 {
         struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
@@ -2424,7 +2424,7 @@ static int mlx4_en_set_tx_ring_size(SYSCTL_HANDLER_ARGS)
         return (error);
 }
 
-static int mlx4_en_get_module_info(struct ifnet *dev,
+static int mlx4_en_get_module_info(if_t dev,
 				   struct ethtool_modinfo *modinfo)
 {
 	struct mlx4_en_priv *priv = mlx4_netdev_priv(dev);
@@ -2471,7 +2471,7 @@ static int mlx4_en_get_module_info(struct ifnet *dev,
 	return 0;
 }
 
-static int mlx4_en_get_module_eeprom(struct ifnet *dev,
+static int mlx4_en_get_module_eeprom(if_t dev,
 				     struct ethtool_eeprom *ee,
 				     u8 *data)
 {
@@ -2655,7 +2655,7 @@ static int mlx4_en_set_rx_ppp(SYSCTL_HANDLER_ARGS)
 
 static void mlx4_en_sysctl_conf(struct mlx4_en_priv *priv)
 {
-        struct ifnet *dev;
+        if_t dev;
         struct sysctl_ctx_list *ctx;
         struct sysctl_oid *node;
         struct sysctl_oid_list *node_list;
@@ -2896,7 +2896,7 @@ static void mlx4_en_sysctl_stat(struct mlx4_en_priv *priv)
 
 #ifdef DEBUGNET
 static void
-mlx4_en_debugnet_init(struct ifnet *dev, int *nrxr, int *ncl, int *clsize)
+mlx4_en_debugnet_init(if_t dev, int *nrxr, int *ncl, int *clsize)
 {
 	struct mlx4_en_priv *priv;
 
@@ -2909,12 +2909,12 @@ mlx4_en_debugnet_init(struct ifnet *dev, int *nrxr, int *ncl, int *clsize)
 }
 
 static void
-mlx4_en_debugnet_event(struct ifnet *dev, enum debugnet_ev event)
+mlx4_en_debugnet_event(if_t dev, enum debugnet_ev event)
 {
 }
 
 static int
-mlx4_en_debugnet_transmit(struct ifnet *dev, struct mbuf *m)
+mlx4_en_debugnet_transmit(if_t dev, struct mbuf *m)
 {
 	struct mlx4_en_priv *priv;
 	int err;
@@ -2931,7 +2931,7 @@ mlx4_en_debugnet_transmit(struct ifnet *dev, struct mbuf *m)
 }
 
 static int
-mlx4_en_debugnet_poll(struct ifnet *dev, int count)
+mlx4_en_debugnet_poll(if_t dev, int count)
 {
 	struct mlx4_en_priv *priv;
 
