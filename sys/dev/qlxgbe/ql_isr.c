@@ -62,7 +62,7 @@ qla_rx_intr(qla_host_t *ha, qla_sgl_rcv_t *sgc, uint32_t sds_idx)
 {
 	qla_rx_buf_t		*rxb;
 	struct mbuf		*mp = NULL, *mpf = NULL, *mpl = NULL;
-	struct ifnet		*ifp = ha->ifp;
+	if_t ifp = ha->ifp;
 	qla_sds_t		*sdsp;
 	struct ether_vlan_header *eh;
 	uint32_t		i, rem_len = 0;
@@ -183,14 +183,14 @@ qla_rx_intr(qla_host_t *ha, qla_sgl_rcv_t *sgc, uint32_t sds_idx)
 
 #else
 		if (tcp_lro_rx(lro, mpf, 0))
-			(*ifp->if_input)(ifp, mpf);
+			if_input(ifp, mpf);
 
 #endif /* #if (__FreeBSD_version >= 1100101) */
 
 	} else
 #endif
 	{
-		(*ifp->if_input)(ifp, mpf);
+		if_input(ifp, mpf);
 	}
 
 	if (sdsp->rx_free > ha->std_replenish)
@@ -211,7 +211,7 @@ qla_lro_intr(qla_host_t *ha, qla_sgl_lro_t *sgc, uint32_t sds_idx)
 {
 	qla_rx_buf_t *rxb;
 	struct mbuf *mp = NULL, *mpf = NULL, *mpl = NULL;
-	struct ifnet *ifp = ha->ifp;
+	if_t ifp = ha->ifp;
 	qla_sds_t *sdsp;
 	struct ether_vlan_header *eh;
 	uint32_t i, rem_len = 0, pkt_length, iplen;
@@ -363,7 +363,7 @@ qla_lro_intr(qla_host_t *ha, qla_sgl_lro_t *sgc, uint32_t sds_idx)
 
 	if_inc_counter(ifp, IFCOUNTER_IPACKETS, 1);
 
-	(*ifp->if_input)(ifp, mpf);
+	if_input(ifp, mpf);
 
 	if (sdsp->rx_free > ha->std_replenish)
 		qla_replenish_normal_rx(ha, sdsp, r_idx);
@@ -985,7 +985,7 @@ ql_isr(void *arg)
 	qla_host_t *ha ;
 	int idx;
 	qla_hw_t *hw;
-	struct ifnet *ifp;
+	if_t ifp;
 	qla_tx_fp_t *fp;
 
 	ha = ivec->ha;
@@ -999,7 +999,7 @@ ql_isr(void *arg)
 	hw->sds[idx].intr_count++;
 
 	if ((fp->fp_taskqueue != NULL) &&
-		(ifp->if_drv_flags & IFF_DRV_RUNNING))
+		(if_getdrvflags(ifp) & IFF_DRV_RUNNING))
 		taskqueue_enqueue(fp->fp_taskqueue, &fp->fp_task);
 
 	return;
