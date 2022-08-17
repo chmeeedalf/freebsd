@@ -324,11 +324,11 @@ sfxge_rx_qrefill(struct sfxge_rxq *rxq)
 
 static void __sfxge_rx_deliver(struct sfxge_softc *sc, struct mbuf *m)
 {
-	struct ifnet *ifp = sc->ifnet;
+	if_t ifp = sc->ifnet;
 
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.csum_data = 0xffff;
-	ifp->if_input(ifp, m);
+	if_input(ifp, m);
 }
 
 static void
