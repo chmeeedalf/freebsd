@@ -220,17 +220,17 @@ MALLOC_DECLARE(M_IAVF);
 #define IAVF_SET_OQDROPS(vsi, count)	(vsi)->oqdrops = (count)
 #define IAVF_SET_NOPROTO(vsi, count)	(vsi)->noproto = (count)
 #else
-#define IAVF_SET_IPACKETS(vsi, count)	(vsi)->ifp->if_ipackets = (count)
-#define IAVF_SET_IERRORS(vsi, count)	(vsi)->ifp->if_ierrors = (count)
-#define IAVF_SET_OPACKETS(vsi, count)	(vsi)->ifp->if_opackets = (count)
-#define IAVF_SET_OERRORS(vsi, count)	(vsi)->ifp->if_oerrors = (count)
-#define IAVF_SET_COLLISIONS(vsi, count)	(vsi)->ifp->if_collisions = (count)
-#define IAVF_SET_IBYTES(vsi, count)	(vsi)->ifp->if_ibytes = (count)
-#define IAVF_SET_OBYTES(vsi, count)	(vsi)->ifp->if_obytes = (count)
-#define IAVF_SET_IMCASTS(vsi, count)	(vsi)->ifp->if_imcasts = (count)
-#define IAVF_SET_OMCASTS(vsi, count)	(vsi)->ifp->if_omcasts = (count)
-#define IAVF_SET_IQDROPS(vsi, count)	(vsi)->ifp->if_iqdrops = (count)
-#define IAVF_SET_OQDROPS(vsi, odrops)	(vsi)->ifp->if_snd.ifq_drops = (odrops)
+if_setipackets(ifp, (count));
+if_setierrors(ifp, (count));
+if_setopackets(ifp, (count));
+if_setoerrors(ifp, (count));
+if_setcollisions(ifp, (count));
+if_setibytes(ifp, (count));
+if_setobytes(ifp, (count));
+if_setimcasts(ifp, (count));
+if_setomcasts(ifp, (count));
+if_setiqdrops(ifp, (count));
+if_setsnd.ifq_drops(ifp, (odrops));
 #define IAVF_SET_NOPROTO(vsi, count)	(vsi)->noproto = (count)
 #endif
 
@@ -487,8 +487,8 @@ void iavf_add_sysctls_eth_stats(struct sysctl_ctx_list *ctx,
     struct sysctl_oid_list *child, struct iavf_eth_stats *eth_stats);
 void iavf_media_status_common(struct iavf_sc *sc,
     struct ifmediareq *ifmr);
-int iavf_media_change_common(struct ifnet *ifp);
-void iavf_set_initial_baudrate(struct ifnet *ifp);
+int iavf_media_change_common(if_t ifp);
+void iavf_set_initial_baudrate(if_t ifp);
 u64 iavf_max_vc_speed_to_value(u8 link_speeds);
 void iavf_config_rss_reg(struct iavf_sc *sc);
 void iavf_config_rss_pf(struct iavf_sc *sc);
