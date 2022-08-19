@@ -698,7 +698,7 @@ hifn_resume(device_t dev)
 	struct hifn_softc *sc = device_get_softc(dev);
 #ifdef notyet
         /* reinitialize interface if necessary */
-        if (ifp->if_flags & IFF_UP)
+        if (if_getflags(ifp) & IFF_UP)
                 rl_init(sc);
 #endif
 	sc->sc_suspended = 0;
