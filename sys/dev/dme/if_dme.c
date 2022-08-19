@@ -69,7 +69,7 @@ __FBSDID("$FreeBSD$");
 #include "miibus_if.h"
 
 struct dme_softc {
-	struct ifnet		*dme_ifp;
+	if_t			dme_ifp;
 	device_t		dme_dev;
 	device_t		dme_miibus;
 	bus_space_handle_t	dme_handle;
@@ -179,7 +179,7 @@ dme_reset(struct dme_softc *sc)
 	sc->dme_txready = 0;
 
 	DTR3("dme_reset, flags %#x busy %d ready %d",
-	    sc->dme_ifp ? sc->dme_ifp->if_drv_flags : 0,
+	    sc->dme_ifp ? if_getdrvflags(sc->dme_ifp) : 0,
 	    sc->dme_txbusy, sc->dme_txready);
 }
 
@@ -307,7 +307,7 @@ dme_config(struct dme_softc *sc)
 void
 dme_prepare(struct dme_softc *sc)
 {
-	struct ifnet *ifp;
+	if_t ifp;
 	struct mbuf *m, *mp;
 	uint16_t total_len, len;
 
@@ -317,11 +317,11 @@ dme_prepare(struct dme_softc *sc)
 	    ("dme_prepare: called with txready set\n"));
 
 	ifp = sc->dme_ifp;
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	m = if_dequeue(ifp);
 	if (m == NULL) {
-		ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+		if_setdrvflagbits(ifp, 0, IFF_DRV_OACTIVE);
 		DTR3("dme_prepare none, flags %#x busy %d ready %d",
-		    sc->dme_ifp->if_drv_flags, sc->dme_txbusy, sc->dme_txready);
+		    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy, sc->dme_txready);
 		return; /* Nothing to transmit */
 	}
 
@@ -360,7 +360,7 @@ dme_prepare(struct dme_softc *sc)
 	sc->dme_txlen = total_len;
 	sc->dme_txready = 1;
 	DTR3("dme_prepare done, flags %#x busy %d ready %d",
-	    sc->dme_ifp->if_drv_flags, sc->dme_txbusy, sc->dme_txready);
+	    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy, sc->dme_txready);
 
 	m_freem(m);
 }
@@ -383,24 +383,24 @@ dme_transmit(struct dme_softc *sc)
 	sc->dme_txready = 0;
 	sc->dme_txbusy = 1;
 	DTR3("dme_transmit done, flags %#x busy %d ready %d",
-	    sc->dme_ifp->if_drv_flags, sc->dme_txbusy, sc->dme_txready);
+	    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy, sc->dme_txready);
 }
 
 
 static void
-dme_start_locked(struct ifnet *ifp)
+dme_start_locked(if_t ifp)
 {
 	struct dme_softc *sc;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 	DME_ASSERT_LOCKED(sc);
 
-	if ((ifp->if_drv_flags & (IFF_DRV_RUNNING | IFF_DRV_OACTIVE)) !=
+	if ((if_getdrvflags(ifp) & (IFF_DRV_RUNNING | IFF_DRV_OACTIVE)) !=
 	    IFF_DRV_RUNNING)
 		return;
 
 	DTR3("dme_start, flags %#x busy %d ready %d",
-	    sc->dme_ifp->if_drv_flags, sc->dme_txbusy, sc->dme_txready);
+	    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy, sc->dme_txready);
 	KASSERT(sc->dme_txbusy == 0 || sc->dme_txready == 0,
 	    ("dme: send without empty queue\n"));
 
@@ -416,15 +416,15 @@ dme_start_locked(struct ifnet *ifp)
 	 * been transmitted.
 	 */
 	if (sc->dme_txready != 0)
-		ifp->if_drv_flags |= IFF_DRV_OACTIVE;
+		if_setdrvflagbits(ifp, IFF_DRV_OACTIVE, 0);
 }
 
 static void
-dme_start(struct ifnet *ifp)
+dme_start(if_t ifp)
 {
 	struct dme_softc *sc;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 	DME_LOCK(sc);
 	dme_start_locked(ifp);
 	DME_UNLOCK(sc);
@@ -433,7 +433,7 @@ dme_start(struct ifnet *ifp)
 static void
 dme_stop(struct dme_softc *sc)
 {
-	struct ifnet *ifp;
+	if_t ifp;
 
 	DME_ASSERT_LOCKED(sc);
 	/* Disable receiver */
@@ -444,10 +444,10 @@ dme_stop(struct dme_softc *sc)
 	callout_stop(&sc->dme_tick_ch);
 
 	ifp = sc->dme_ifp;
-	ifp->if_drv_flags &= ~(IFF_DRV_RUNNING | IFF_DRV_OACTIVE);
+	if_setdrvflagbits(ifp, 0, (IFF_DRV_RUNNING | IFF_DRV_OACTIVE));
 
 	DTR3("dme_stop, flags %#x busy %d ready %d",
-	    sc->dme_ifp->if_drv_flags, sc->dme_txbusy, sc->dme_txready);
+	    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy, sc->dme_txready);
 	sc->dme_txbusy = 0;
 	sc->dme_txready = 0;
 }
@@ -455,7 +455,7 @@ dme_stop(struct dme_softc *sc)
 static int
 dme_rxeof(struct dme_softc *sc)
 {
-	struct ifnet *ifp;
+	if_t ifp;
 	struct mbuf *m;
 	int len, i;
 
@@ -534,7 +534,7 @@ dme_rxeof(struct dme_softc *sc)
 #endif
 	if_inc_counter(ifp, IFCOUNTER_IPACKETS, 1);
 	DME_UNLOCK(sc);
-	(*ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	DME_LOCK(sc);
 
 	return 0;
@@ -569,7 +569,7 @@ dme_intr(void *arg)
 	dme_write_reg(sc, DME_ISR, intr_status);
 
 	DTR4("dme_intr flags %#x busy %d ready %d intr %#x",
-	    sc->dme_ifp->if_drv_flags, sc->dme_txbusy,
+	    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy,
 	    sc->dme_txready, intr_status);
 
 	if (intr_status & ISR_PT) {
@@ -587,7 +587,7 @@ dme_intr(void *arg)
 			tx_status = 1;
 
 		DTR4("dme_intr flags %#x busy %d ready %d nsr %#x",
-		    sc->dme_ifp->if_drv_flags, sc->dme_txbusy,
+		    if_getdrvflags(sc->dme_ifp), sc->dme_txbusy,
 		    sc->dme_txready, nsr);
 
 		/* Prepare packet to send if none is currently pending */
@@ -604,7 +604,7 @@ dme_intr(void *arg)
 			 * been transmitted.
 			 */
 			if (sc->dme_txready != 0)
-				sc->dme_ifp->if_drv_flags |= IFF_DRV_OACTIVE;
+				if_setdrvflagbits(ifp, IFF_DRV_OACTIVE, 0);
 		}
 	}
 
@@ -622,14 +622,14 @@ dme_setmode(struct dme_softc *sc)
 }
 
 static int
-dme_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+dme_ioctl(if_t ifp, u_long command, caddr_t data)
 {
 	struct dme_softc *sc;
 	struct mii_data *mii;
 	struct ifreq *ifr;
 	int error = 0;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 	ifr = (struct ifreq *)data;
 
 	switch (command) {
@@ -639,12 +639,12 @@ dme_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		 * "stopped", reflecting the UP flag.
 		 */
 		DME_LOCK(sc);
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0) {
+		if (if_getflags(ifp) & IFF_UP) {
+			if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) == 0) {
 				dme_init_locked(sc);
 			}
 		} else {
-			if ((ifp->if_drv_flags & IFF_DRV_RUNNING) != 0) {
+			if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) != 0) {
 				dme_stop(sc);
 			}
 		}
@@ -665,18 +665,18 @@ dme_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 static void dme_init_locked(struct dme_softc *sc)
 {
-	struct ifnet *ifp = sc->dme_ifp;
+	if_t ifp = sc->dme_ifp;
 
 	DME_ASSERT_LOCKED(sc);
 
-	if ((ifp->if_drv_flags & IFF_DRV_RUNNING) != 0)
+	if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) != 0)
 		return;
 
 	dme_reset(sc);
 	dme_config(sc);
 
-	ifp->if_drv_flags |= IFF_DRV_RUNNING;
-	ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+	if_setdrvflagbits(ifp, IFF_DRV_RUNNING, 0);
+	if_setdrvflagbits(ifp, 0, IFF_DRV_OACTIVE);
 
 	callout_reset(&sc->dme_tick_ch, hz, dme_tick, sc);
 }
@@ -692,12 +692,12 @@ dme_init(void *xcs)
 }
 
 static int
-dme_ifmedia_upd(struct ifnet *ifp)
+dme_ifmedia_upd(if_t ifp)
 {
 	struct dme_softc *sc;
 	struct mii_data *mii;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 	mii = device_get_softc(sc->dme_miibus);
 
 	DME_LOCK(sc);
@@ -708,12 +708,12 @@ dme_ifmedia_upd(struct ifnet *ifp)
 }
 
 static void
-dme_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+dme_ifmedia_sts(if_t ifp, struct ifmediareq *ifmr)
 {
 	struct dme_softc *sc;
 	struct mii_data *mii;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 	mii = device_get_softc(sc->dme_miibus);
 
 	DME_LOCK(sc);
@@ -741,7 +741,7 @@ static int
 dme_attach(device_t dev)
 {
 	struct dme_softc *sc;
-	struct ifnet *ifp;
+	if_t ifp;
 	int error, rid;
 	uint32_t data;
 
@@ -888,7 +888,7 @@ dme_attach(device_t dev)
 		error = ENOSPC;
 		goto fail;
 	}
-	ifp->if_softc = sc;
+	if_setsoftc(ifp, sc);
 
 	/* Setup MII */
 	error = mii_attach(dev, &sc->dme_miibus, ifp, dme_ifmedia_upd,
@@ -900,11 +900,11 @@ dme_attach(device_t dev)
 	}
 
 	if_initname(ifp, device_get_name(dev), device_get_unit(dev));
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_start = dme_start;
-	ifp->if_ioctl = dme_ioctl;
-	ifp->if_init = dme_init;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	if_setflags(ifp, IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
+	if_setstartfn(ifp, dme_start);
+	if_setioctlfn(ifp, dme_ioctl);
+	if_setinitfn(ifp, dme_init);
+	if_setsendqlen(ifp, IFQ_MAXLEN);
 
 	ether_ifattach(ifp, sc->dme_macaddr);
 
@@ -926,7 +926,7 @@ static int
 dme_detach(device_t dev)
 {
 	struct dme_softc *sc;
-	struct ifnet *ifp;
+	if_t ifp;
 
 	sc = device_get_softc(dev);
 	KASSERT(mtx_initialized(&sc->dme_mtx), ("dme mutex not initialized"));
