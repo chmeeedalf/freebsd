@@ -39,6 +39,7 @@ __FBSDID("$FreeBSD$");
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/if_var.h>
 
 #include <dev/dwc/if_dwc.h>
 #include <dev/dwc/if_dwcvar.h>
