@@ -87,7 +87,7 @@ mlx5_ib_port_link_layer(struct ib_device *device, u8 port_num)
 	return mlx5_port_type_cap_to_rdma_ll(port_type_cap);
 }
 
-static bool mlx5_netdev_match(struct ifnet *ndev,
+static bool mlx5_netdev_match(if_t ndev,
 			      struct mlx5_core_dev *mdev,
 			      const char *dname)
 {
@@ -101,7 +101,7 @@ static bool mlx5_netdev_match(struct ifnet *ndev,
 static int mlx5_netdev_event(struct notifier_block *this,
 			     unsigned long event, void *ptr)
 {
-	struct ifnet *ndev = netdev_notifier_info_to_ifp(ptr);
+	if_t ndev = netdev_notifier_info_to_ifp(ptr);
 	struct mlx5_ib_dev *ibdev = container_of(this, struct mlx5_ib_dev,
 						 roce.nb);
 
@@ -118,7 +118,7 @@ static int mlx5_netdev_event(struct notifier_block *this,
 
 	case NETDEV_UP:
 	case NETDEV_DOWN: {
-		struct ifnet *upper = NULL;
+		if_t upper = NULL;
 
 		if ((upper == ndev || (!upper && ndev == ibdev->roce.netdev))
 		    && ibdev->ib_active) {
@@ -140,11 +140,11 @@ static int mlx5_netdev_event(struct notifier_block *this,
 	return NOTIFY_DONE;
 }
 
-static struct ifnet *mlx5_ib_get_netdev(struct ib_device *device,
+static if_t mlx5_ib_get_netdev(struct ib_device *device,
 					     u8 port_num)
 {
 	struct mlx5_ib_dev *ibdev = to_mdev(device);
-	struct ifnet *ndev;
+	if_t ndev;
 
 	/* Ensure ndev does not disappear before we invoke if_ref()
 	 */
@@ -289,7 +289,7 @@ static int mlx5_query_port_roce(struct ib_device *device, u8 port_num,
 {
 	struct mlx5_ib_dev *dev = to_mdev(device);
 	u32 out[MLX5_ST_SZ_DW(ptys_reg)] = {};
-	struct ifnet *ndev;
+	if_t ndev;
 	enum ib_mtu ndev_ib_mtu;
 	u16 qkey_viol_cntr;
 	u32 eth_prot_oper;
@@ -361,7 +361,7 @@ static void ib_gid_to_mlx5_roce_addr(const union ib_gid *gid,
 
 	if (!gid)
 		return;
-	ether_addr_copy(mlx5_addr_mac, IF_LLADDR(attr->ndev));
+	ether_addr_copy(mlx5_addr_mac, if_getlladdr(attr->ndev));
 
 	vlan_id = rdma_vlan_dev_vlan_id(attr->ndev);
 	if (vlan_id != 0xffff) {
@@ -3135,7 +3135,7 @@ static void mlx5_remove_roce_notifier(struct mlx5_ib_dev *dev)
 static int mlx5_enable_roce(struct mlx5_ib_dev *dev)
 {
 	VNET_ITERATOR_DECL(vnet_iter);
-	struct ifnet *idev;
+	if_t idev;
 	int err;
 
 	/* Check if mlx5en net device already exists */
