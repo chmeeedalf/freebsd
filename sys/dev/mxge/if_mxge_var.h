@@ -215,7 +215,7 @@ struct mxge_slice_state {
 };
 
 struct mxge_softc {
-	struct ifnet* ifp;
+	if_t  ifp;
 	struct mxge_slice_state *ss;
 	int tx_boundary;		/* boundary transmits cannot cross*/
 	int lro_cnt;
