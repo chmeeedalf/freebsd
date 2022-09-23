@@ -63,7 +63,7 @@
 #include <dev/gxemul/ether/gxreg.h>
 
 struct gx_softc {
-	struct ifnet *sc_ifp;
+	if_t sc_ifp;
 	device_t sc_dev;
 	unsigned sc_port;
 	int sc_flags;
@@ -83,12 +83,12 @@ static int	gx_detach(device_t);
 static int	gx_shutdown(device_t);
 
 static void	gx_init(void *);
-static int	gx_transmit(struct ifnet *, struct mbuf *);
+static int	gx_transmit(if_t , struct mbuf *);
 
-static int	gx_medchange(struct ifnet *);
-static void	gx_medstat(struct ifnet *, struct ifmediareq *);
+static int	gx_medchange(if_t );
+static void	gx_medstat(if_t , struct ifmediareq *);
 
-static int	gx_ioctl(struct ifnet *, u_long, caddr_t);
+static int	gx_ioctl(if_t , u_long, caddr_t);
 
 static void	gx_rx_intr(void *);
 
@@ -131,7 +131,7 @@ gx_probe(device_t dev)
 static int
 gx_attach(device_t dev)
 {
-	struct ifnet *ifp;
+	if_t ifp;
 	struct gx_softc *sc;
 	uint8_t mac[6];
 	int error;
@@ -171,14 +171,14 @@ gx_attach(device_t dev)
 	}
 
 	if_initname(ifp, device_get_name(dev), device_get_unit(dev));
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = gx_init;
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST | IFF_ALLMULTI;
-	ifp->if_ioctl = gx_ioctl;
+	if_setmtu(ifp, ETHERMTU);
+	if_setinitfn(ifp, gx_init);
+	if_setsoftc(ifp, sc);
+	if_setflags(ifp, IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST | IFF_ALLMULTI);
+	if_setioctlfn(ifp, gx_ioctl);
 
 	sc->sc_ifp = ifp;
-	sc->sc_flags = ifp->if_flags;
+	sc->sc_flags = if_getflags(ifp);
 
 	ifmedia_init(&sc->sc_ifmedia, 0, gx_medchange, gx_medstat);
 
@@ -189,7 +189,7 @@ gx_attach(device_t dev)
 
 	ether_ifattach(ifp, mac);
 
-	ifp->if_transmit = gx_transmit;
+	if_settransmitfn(ifp, gx_transmit);
 
 	return (bus_generic_attach(dev));
 }
@@ -216,26 +216,26 @@ gx_shutdown(device_t dev)
 static void
 gx_init(void *arg)
 {
-	struct ifnet *ifp;
+	if_t ifp;
 	struct gx_softc *sc;
 
 	sc = arg;
 	ifp = sc->sc_ifp;
 
-	if ((ifp->if_drv_flags & IFF_DRV_RUNNING) != 0)
-		ifp->if_drv_flags &= ~IFF_DRV_RUNNING;
+	if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) != 0)
+		if_setdrvflagbits(ifp, 0, IFF_DRV_RUNNING);
 
-	ifp->if_drv_flags |= IFF_DRV_RUNNING;
+	if_setdrvflagbits(ifp, IFF_DRV_RUNNING, 0);
 }
 
 static int
-gx_transmit(struct ifnet *ifp, struct mbuf *m)
+gx_transmit(if_t ifp, struct mbuf *m)
 {
 	struct gx_softc *sc;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 
-	if ((ifp->if_drv_flags & IFF_DRV_RUNNING) != IFF_DRV_RUNNING) {
+	if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) != IFF_DRV_RUNNING) {
 		m_freem(m);
 		return (0);
 	}
@@ -257,17 +257,17 @@ gx_transmit(struct ifnet *ifp, struct mbuf *m)
 }
 
 static int
-gx_medchange(struct ifnet *ifp)
+gx_medchange(if_t ifp)
 {
 	return (ENOTSUP);
 }
 
 static void
-gx_medstat(struct ifnet *ifp, struct ifmediareq *ifm)
+gx_medstat(if_t ifp, struct ifmediareq *ifm)
 {
 	struct gx_softc *sc;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 
 	/* Lie amazingly.  */
 	ifm->ifm_status = IFM_AVALID | IFM_ACTIVE;
@@ -275,7 +275,7 @@ gx_medstat(struct ifnet *ifp, struct ifmediareq *ifm)
 }
 
 static int
-gx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+gx_ioctl(if_t ifp, u_long cmd, caddr_t data)
 {
 	struct gx_softc *sc;
 	struct ifreq *ifr;
@@ -284,7 +284,7 @@ gx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 	int error;
 
-	sc = ifp->if_softc;
+	sc = if_getsoftc(ifp);
 	ifr = (struct ifreq *)data;
 #ifdef INET
 	ifa = (struct ifaddr *)data;
@@ -297,8 +297,8 @@ gx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * Avoid reinitialization unless it's necessary.
 		 */
 		if (ifa->ifa_addr->sa_family == AF_INET) {
-			ifp->if_flags |= IFF_UP;
-			if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0)
+			if_setflagsbit(ifp, IFF_UP, 0);
+			if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) == 0)
 				gx_init(sc);
 			arp_ifinit(ifp, ifa);
 
@@ -311,16 +311,16 @@ gx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return (0);
 
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags == sc->sc_flags)
+		if (if_getflags(ifp) == sc->sc_flags)
 			return (0);
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if ((if_getflags(ifp) & IFF_UP) != 0) {
 			gx_init(sc);
 		} else {
-			if ((ifp->if_drv_flags & IFF_DRV_RUNNING) != 0) {
-				ifp->if_drv_flags &= ~IFF_DRV_RUNNING;
+			if ((if_getdrvflags(ifp) & IFF_DRV_RUNNING) != 0) {
+				if_setdrvflagbits(ifp, 0, IFF_DRV_RUNNING);
 			}
 		}
-		sc->sc_flags = ifp->if_flags;
+		sc->sc_flags = if_getflags(ifp);
 		return (0);
 
 	case SIOCSIFMTU:
@@ -390,7 +390,7 @@ gx_rx_intr(void *arg)
 
 		GXEMUL_ETHER_UNLOCK(sc);
 
-		(*sc->sc_ifp->if_input)(sc->sc_ifp, m);
+		if_input(sc->sc_ifp, m);
 
 		GXEMUL_ETHER_LOCK(sc);
 	}
