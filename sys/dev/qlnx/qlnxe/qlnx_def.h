@@ -371,7 +371,7 @@ struct qlnx_host {
 	uint8_t			dev_unit;
 	uint16_t		device_id;
 
-	struct ifnet		*ifp;
+	if_t ifp;
 	int			if_flags;
 	volatile int		link_up;
 	struct ifmedia		media;
@@ -512,7 +512,7 @@ typedef struct qlnx_host qlnx_host_t;
 #define QL_MIN(x, y) ((x < y) ? x : y)
 
 #define QL_RUNNING(ifp) \
-		((ifp->if_drv_flags & (IFF_DRV_RUNNING | IFF_DRV_OACTIVE)) == \
+		((if_getdrvflags(ifp) & (IFF_DRV_RUNNING | IFF_DRV_OACTIVE)) == \
 			IFF_DRV_RUNNING)
 
 #define QLNX_MAX_MTU			9000
@@ -717,12 +717,12 @@ extern int qlnx_alloc_mem_sb(qlnx_host_t *ha, struct ecore_sb_info *sb_info,
 
 #if __FreeBSD_version < 1100000
 
-#define QLNX_INC_IERRORS(ifp)		ifp->if_ierrors++
-#define QLNX_INC_IQDROPS(ifp)		ifp->if_iqdrops++
-#define QLNX_INC_IPACKETS(ifp)		ifp->if_ipackets++
-#define QLNX_INC_OPACKETS(ifp)		ifp->if_opackets++
-#define QLNX_INC_OBYTES(ifp, len)	ifp->if_obytes += len
-#define QLNX_INC_IBYTES(ifp, len)	ifp->if_ibytes += len
+if_incierrors(ifp, 1);
+if_inciqdrops(ifp, 1);
+if_incipackets(ifp, 1);
+if_incopackets(ifp, 1);
+if_incobytes(ifp, len);
+if_incibytes(ifp, len);
 
 #else
 

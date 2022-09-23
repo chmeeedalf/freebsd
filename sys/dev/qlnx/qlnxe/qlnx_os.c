@@ -89,19 +89,19 @@ static void qlnx_init_locked(qlnx_host_t *ha);
 static int qlnx_set_multi(qlnx_host_t *ha, uint32_t add_multi);
 static int qlnx_set_promisc(qlnx_host_t *ha);
 static int qlnx_set_allmulti(qlnx_host_t *ha);
-static int qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
-static int qlnx_media_change(struct ifnet *ifp);
-static void qlnx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr);
+static int qlnx_ioctl(if_t ifp, u_long cmd, caddr_t data);
+static int qlnx_media_change(if_t ifp);
+static void qlnx_media_status(if_t ifp, struct ifmediareq *ifmr);
 static void qlnx_stop(qlnx_host_t *ha);
 static int qlnx_send(qlnx_host_t *ha, struct qlnx_fastpath *fp,
 		struct mbuf **m_headp);
 static int qlnx_get_ifq_snd_maxlen(qlnx_host_t *ha);
 static uint32_t qlnx_get_optics(qlnx_host_t *ha,
 			struct qlnx_link_output *if_link);
-static int qlnx_transmit(struct ifnet *ifp, struct mbuf  *mp);
-static int qlnx_transmit_locked(struct ifnet *ifp, struct qlnx_fastpath *fp,
+static int qlnx_transmit(if_t ifp, struct mbuf  *mp);
+static int qlnx_transmit_locked(if_t ifp, struct qlnx_fastpath *fp,
 		struct mbuf *mp);
-static void qlnx_qflush(struct ifnet *ifp);
+static void qlnx_qflush(if_t ifp);
 
 static int qlnx_alloc_parent_dma_tag(qlnx_host_t *ha);
 static void qlnx_free_parent_dma_tag(qlnx_host_t *ha);
@@ -568,7 +568,7 @@ qlnx_fp_taskqueue(void *context, int pending)
 {
         struct qlnx_fastpath	*fp;
         qlnx_host_t		*ha;
-        struct ifnet		*ifp;
+        if_t ifp;
 
         fp = context;
 
@@ -579,7 +579,7 @@ qlnx_fp_taskqueue(void *context, int pending)
 
 	ifp = ha->ifp;
 
-        if(ifp->if_drv_flags & IFF_DRV_RUNNING) {
+        if(if_getdrvflags(ifp) & IFF_DRV_RUNNING) {
                 if (!drbr_empty(ifp, fp->tx_br)) {
                         if(mtx_trylock(&fp->tx_mtx)) {
 #ifdef QLNX_TRACE_PERF_DATA
@@ -1397,7 +1397,7 @@ qlnx_trigger_dump(qlnx_host_t *ha)
 	int	i;
 
 	if (ha->ifp != NULL)
-		ha->ifp->if_drv_flags &= ~(IFF_DRV_OACTIVE | IFF_DRV_RUNNING);
+		if_setdrvflagbits(ha->ifp, 0, (IFF_DRV_OACTIVE | IFF_DRV_RUNNING));
 
 	QL_DPRINT2(ha, "enter\n");
 
@@ -2322,7 +2322,7 @@ static void
 qlnx_init_ifnet(device_t dev, qlnx_host_t *ha)
 {
 	uint16_t	device_id;
-        struct ifnet	*ifp;
+        if_t ifp;
 
         ifp = ha->ifp = if_alloc(IFT_ETHER);
 
@@ -2336,38 +2336,37 @@ qlnx_init_ifnet(device_t dev, qlnx_host_t *ha)
 #if __FreeBSD_version >= 1000000
 
         if (device_id == QLOGIC_PCI_DEVICE_ID_1634) 
-		ifp->if_baudrate = IF_Gbps(40);
+		if_setbaudrate(ifp, IF_Gbps(40));
         else if ((device_id == QLOGIC_PCI_DEVICE_ID_1656) ||
 			(device_id == QLOGIC_PCI_DEVICE_ID_8070))
-		ifp->if_baudrate = IF_Gbps(25);
+		if_setbaudrate(ifp, IF_Gbps(25));
         else if (device_id == QLOGIC_PCI_DEVICE_ID_1654)
-		ifp->if_baudrate = IF_Gbps(50);
+		if_setbaudrate(ifp, IF_Gbps(50));
         else if (device_id == QLOGIC_PCI_DEVICE_ID_1644)
-		ifp->if_baudrate = IF_Gbps(100);
+		if_setbaudrate(ifp, IF_Gbps(100));
 
-        ifp->if_capabilities = IFCAP_LINKSTATE;
+        if_setcapabilities(ifp, IFCAP_LINKSTATE);
 #else
-        ifp->if_mtu = ETHERMTU;
-	ifp->if_baudrate = (1 * 1000 * 1000 *1000);
+        if_setmtu(ifp, ETHERMTU);
+	if_setbaudrate(ifp, (1 * 1000 * 1000 *1000));
 
 #endif /* #if __FreeBSD_version >= 1000000 */
 
-        ifp->if_init = qlnx_init;
-        ifp->if_softc = ha;
-        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-        ifp->if_ioctl = qlnx_ioctl;
-        ifp->if_transmit = qlnx_transmit;
-        ifp->if_qflush = qlnx_qflush;
+        if_setinitfn(ifp, qlnx_init);
+        if_setsoftc(ifp, ha);
+        if_setflags(ifp, IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
+        if_setioctlfn(ifp, qlnx_ioctl);
+        if_settransmitfn(ifp, qlnx_transmit);
+        if_setqflushfn(ifp, qlnx_qflush);
 
-        IFQ_SET_MAXLEN(&ifp->if_snd, qlnx_get_ifq_snd_maxlen(ha));
-        ifp->if_snd.ifq_drv_maxlen = qlnx_get_ifq_snd_maxlen(ha);
-        IFQ_SET_READY(&ifp->if_snd);
+        if_setsendqlen(ifp, qlnx_get_ifq_snd_maxlen(ha));
+        if_setsendqready(ifp);
 
 #if __FreeBSD_version >= 1100036
 	if_setgetcounterfn(ifp, qlnx_get_counter);
 #endif
 
-        ha->max_frame_size = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
+        ha->max_frame_size = if_getmtu(ifp) + ETHER_HDR_LEN + ETHER_CRC_LEN;
 
         memcpy(ha->primary_mac, qlnx_get_mac_addr(ha), ETH_ALEN);
 
@@ -2387,33 +2386,33 @@ qlnx_init_ifnet(device_t dev, qlnx_host_t *ha)
 	}
 
 	ether_ifattach(ifp, ha->primary_mac);
-	bcopy(IF_LLADDR(ha->ifp), ha->primary_mac, ETHER_ADDR_LEN);
+	bcopy(if_getlladdr(ha->ifp), ha->primary_mac, ETHER_ADDR_LEN);
 
-	ifp->if_capabilities = IFCAP_HWCSUM;
-	ifp->if_capabilities |= IFCAP_JUMBO_MTU;
+	if_setcapabilities(ifp, IFCAP_HWCSUM);
+	if_setcapabilitiesbit(ifp, IFCAP_JUMBO_MTU, 0);
 
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-	ifp->if_capabilities |= IFCAP_VLAN_HWFILTER;
-	ifp->if_capabilities |= IFCAP_VLAN_HWCSUM;
-	ifp->if_capabilities |= IFCAP_VLAN_HWTSO;
-	ifp->if_capabilities |= IFCAP_TSO4;
-	ifp->if_capabilities |= IFCAP_TSO6;
-	ifp->if_capabilities |= IFCAP_LRO;
+	if_setcapabilitiesbit(ifp, IFCAP_VLAN_MTU, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_VLAN_HWTAGGING, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_VLAN_HWFILTER, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_VLAN_HWCSUM, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_VLAN_HWTSO, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_TSO4, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_TSO6, 0);
+	if_setcapabilitiesbit(ifp, IFCAP_LRO, 0);
 
-	ifp->if_hw_tsomax =  QLNX_MAX_TSO_FRAME_SIZE -
-				(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN);
-	ifp->if_hw_tsomaxsegcount = QLNX_MAX_SEGMENTS - 1 /* hdr */;
-	ifp->if_hw_tsomaxsegsize = QLNX_MAX_TX_MBUF_SIZE;
+	if_sethwtsomax(ifp,  QLNX_MAX_TSO_FRAME_SIZE -
+				(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN));
 
-        ifp->if_capenable = ifp->if_capabilities;
+	if_sethwtsomaxsegsize(ifp, QLNX_MAX_TX_MBUF_SIZE);
 
-	ifp->if_hwassist = CSUM_IP;
-	ifp->if_hwassist |= CSUM_TCP | CSUM_UDP;
-	ifp->if_hwassist |= CSUM_TCP_IPV6 | CSUM_UDP_IPV6;
-	ifp->if_hwassist |= CSUM_TSO;
+        if_setcapenable(ifp, if_getcapabilities(ifp));
 
-	ifp->if_hdrlen = sizeof(struct ether_vlan_header);
+	if_sethwassist(ifp, CSUM_IP);
+	if_sethwassistbits(ifp, CSUM_TCP | CSUM_UDP, 0);
+	if_sethwassistbits(ifp, CSUM_TCP_IPV6 | CSUM_UDP_IPV6, 0);
+	if_sethwassistbits(ifp, CSUM_TSO, 0);
+
+	if_setifheaderlen(ifp, sizeof(struct ether_vlan_header));
 
         ifmedia_init(&ha->media, IFM_IMASK, qlnx_media_change,\
 		qlnx_media_status);
@@ -2451,15 +2450,15 @@ qlnx_init_ifnet(device_t dev, qlnx_host_t *ha)
 static void
 qlnx_init_locked(qlnx_host_t *ha)
 {
-	struct ifnet	*ifp = ha->ifp;
+	if_t ifp = ha->ifp;
 
 	QL_DPRINT1(ha, "Driver Initialization start \n");
 
 	qlnx_stop(ha);
 
 	if (qlnx_load(ha) == 0) {
-		ifp->if_drv_flags |= IFF_DRV_RUNNING;
-		ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+		if_setdrvflagbits(ifp, IFF_DRV_RUNNING, 0);
+		if_setdrvflagbits(ifp, 0, IFF_DRV_OACTIVE);
 
 #ifdef QLNX_ENABLE_IWARP
 		if (qlnx_vf_device(ha) != 0) {
@@ -2610,7 +2609,7 @@ static int
 qlnx_set_multi(qlnx_host_t *ha, uint32_t add_multi)
 {
 	uint8_t		mta[QLNX_MAX_NUM_MULTICAST_ADDRS * ETHER_HDR_LEN];
-	struct ifnet	*ifp = ha->ifp;
+	if_t ifp = ha->ifp;
 	u_int		mcnt;
 
 	if (qlnx_vf_device(ha) == 0)
@@ -2659,22 +2658,22 @@ qlnx_set_allmulti(qlnx_host_t *ha)
 }
 
 static int
-qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+qlnx_ioctl(if_t ifp, u_long cmd, caddr_t data)
 {
 	int		ret = 0, mask;
 	struct ifreq	*ifr = (struct ifreq *)data;
 	struct ifaddr	*ifa = (struct ifaddr *)data;
 	qlnx_host_t	*ha;
 
-	ha = (qlnx_host_t *)ifp->if_softc;
+	ha = (qlnx_host_t *)if_getsoftc(ifp);
 
 	switch (cmd) {
 	case SIOCSIFADDR:
 		QL_DPRINT4(ha, "SIOCSIFADDR (0x%lx)\n", cmd);
 
 		if (ifa->ifa_addr->sa_family == AF_INET) {
-			ifp->if_flags |= IFF_UP;
-			if (!(ifp->if_drv_flags & IFF_DRV_RUNNING)) {
+			if_setflagbits(ifp, IFF_UP, 0);
+			if (!(if_getdrvflags(ifp) & IFF_DRV_RUNNING)) {
 				QLNX_LOCK(ha);
 				qlnx_init_locked(ha);
 				QLNX_UNLOCK(ha);
@@ -2695,10 +2694,10 @@ qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ret = EINVAL;
 		} else {
 			QLNX_LOCK(ha);
-			ifp->if_mtu = ifr->ifr_mtu;
+			if_setmtu(ifp, ifr->ifr_mtu);
 			ha->max_frame_size =
-				ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-			if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+				if_getmtu(ifp) + ETHER_HDR_LEN + ETHER_CRC_LEN;
+			if (if_getdrvflags(ifp) & IFF_DRV_RUNNING) {
 				qlnx_init_locked(ha);
 			}
 
@@ -2712,24 +2711,24 @@ qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		QLNX_LOCK(ha);
 
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
-				if ((ifp->if_flags ^ ha->if_flags) &
+		if (if_getflags(ifp) & IFF_UP) {
+			if (if_getdrvflags(ifp) & IFF_DRV_RUNNING) {
+				if ((if_getflags(ifp) ^ ha->if_flags) &
 					IFF_PROMISC) {
 					ret = qlnx_set_promisc(ha);
-				} else if ((ifp->if_flags ^ ha->if_flags) &
+				} else if ((if_getflags(ifp) ^ ha->if_flags) &
 					IFF_ALLMULTI) {
 					ret = qlnx_set_allmulti(ha);
 				}
 			} else {
-				ha->max_frame_size = ifp->if_mtu +
+				ha->max_frame_size = if_getmtu(ifp) +
 					ETHER_HDR_LEN + ETHER_CRC_LEN;
 				qlnx_init_locked(ha);
 			}
 		} else {
-			if (ifp->if_drv_flags & IFF_DRV_RUNNING)
+			if (if_getdrvflags(ifp) & IFF_DRV_RUNNING)
 				qlnx_stop(ha);
-			ha->if_flags = ifp->if_flags;
+			ha->if_flags = if_getflags(ifp);
 		}
 
 		QLNX_UNLOCK(ha);
@@ -2738,7 +2737,7 @@ qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCADDMULTI:
 		QL_DPRINT4(ha, "%s (0x%lx)\n", "SIOCADDMULTI", cmd);
 
-		if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+		if (if_getdrvflags(ifp) & IFF_DRV_RUNNING) {
 			if (qlnx_set_multi(ha, 1))
 				ret = EINVAL;
 		}
@@ -2747,7 +2746,7 @@ qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		QL_DPRINT4(ha, "%s (0x%lx)\n", "SIOCDELMULTI", cmd);
 
-		if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+		if (if_getdrvflags(ifp) & IFF_DRV_RUNNING) {
 			if (qlnx_set_multi(ha, 0))
 				ret = EINVAL;
 		}
@@ -2762,26 +2761,26 @@ qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFCAP:
 		
-		mask = ifr->ifr_reqcap ^ ifp->if_capenable;
+		mask = ifr->ifr_reqcap ^ if_getcapenable(ifp);
 
 		QL_DPRINT4(ha, "SIOCSIFCAP (0x%lx)\n", cmd);
 
 		if (mask & IFCAP_HWCSUM)
-			ifp->if_capenable ^= IFCAP_HWCSUM;
+			if_togglecapenable(ifp, IFCAP_HWCSUM);
 		if (mask & IFCAP_TSO4)
-			ifp->if_capenable ^= IFCAP_TSO4;
+			if_togglecapenable(ifp, IFCAP_TSO4);
 		if (mask & IFCAP_TSO6)
-			ifp->if_capenable ^= IFCAP_TSO6;
+			if_togglecapenable(ifp, IFCAP_TSO6);
 		if (mask & IFCAP_VLAN_HWTAGGING)
-			ifp->if_capenable ^= IFCAP_VLAN_HWTAGGING;
+			if_togglecapenable(ifp, IFCAP_VLAN_HWTAGGING);
 		if (mask & IFCAP_VLAN_HWTSO)
-			ifp->if_capenable ^= IFCAP_VLAN_HWTSO;
+			if_togglecapenable(ifp, IFCAP_VLAN_HWTSO);
 		if (mask & IFCAP_LRO)
-			ifp->if_capenable ^= IFCAP_LRO;
+			if_togglecapenable(ifp, IFCAP_LRO);
 
 		QLNX_LOCK(ha);
 
-		if (ifp->if_drv_flags & IFF_DRV_RUNNING)
+		if (if_getdrvflags(ifp) & IFF_DRV_RUNNING)
 			qlnx_init_locked(ha);
 
 		QLNX_UNLOCK(ha);
@@ -2850,13 +2849,13 @@ qlnx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 static int
-qlnx_media_change(struct ifnet *ifp)
+qlnx_media_change(if_t ifp)
 {
 	qlnx_host_t	*ha;
 	struct ifmedia	*ifm;
 	int		ret = 0;
 
-	ha = (qlnx_host_t *)ifp->if_softc;
+	ha = (qlnx_host_t *)if_getsoftc(ifp);
 
 	QL_DPRINT2(ha, "enter\n");
 
@@ -2871,11 +2870,11 @@ qlnx_media_change(struct ifnet *ifp)
 }
 
 static void
-qlnx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
+qlnx_media_status(if_t ifp, struct ifmediareq *ifmr)
 {
 	qlnx_host_t		*ha;
 
-	ha = (qlnx_host_t *)ifp->if_softc;
+	ha = (qlnx_host_t *)if_getsoftc(ifp);
 
 	QL_DPRINT2(ha, "enter\n");
 
@@ -3022,7 +3021,7 @@ qlnx_tx_int(qlnx_host_t *ha, struct qlnx_fastpath *fp,
 }
 
 static int
-qlnx_transmit_locked(struct ifnet *ifp,struct qlnx_fastpath  *fp, struct mbuf  *mp)
+qlnx_transmit_locked(if_t ifp,struct qlnx_fastpath  *fp, struct mbuf  *mp)
 {
         int                     ret = 0;
         struct qlnx_tx_queue    *txq;
@@ -3032,7 +3031,7 @@ qlnx_transmit_locked(struct ifnet *ifp,struct qlnx_fastpath  *fp, struct mbuf  *
         txq = fp->txq[0];
         ha = (qlnx_host_t *)fp->edev;
 
-        if ((!(ifp->if_drv_flags & IFF_DRV_RUNNING)) || (!ha->link_up)) {
+        if ((!(if_getdrvflags(ifp) & IFF_DRV_RUNNING)) || (!ha->link_up)) {
                 if(mp != NULL)
                         ret = drbr_enqueue(ifp, fp->tx_br, mp);
                 return (ret);
@@ -3073,9 +3072,9 @@ qlnx_transmit_locked_exit:
 }
 
 static int
-qlnx_transmit(struct ifnet *ifp, struct mbuf  *mp)
+qlnx_transmit(if_t ifp, struct mbuf  *mp)
 {
-        qlnx_host_t		*ha = (qlnx_host_t *)ifp->if_softc;
+        qlnx_host_t		*ha = (qlnx_host_t *)if_getsoftc(ifp);
         struct qlnx_fastpath	*fp;
         int			rss_id = 0, ret = 0;
 
@@ -3127,14 +3126,14 @@ qlnx_transmit_exit:
 }
 
 static void
-qlnx_qflush(struct ifnet *ifp)
+qlnx_qflush(if_t ifp)
 {
 	int			rss_id;
 	struct qlnx_fastpath	*fp;
 	struct mbuf		*mp;
 	qlnx_host_t		*ha;
 
-	ha = (qlnx_host_t *)ifp->if_softc;
+	ha = (qlnx_host_t *)if_getsoftc(ifp);
 
 	QL_DPRINT2(ha, "enter\n");
 
@@ -3776,10 +3775,10 @@ qlnx_send(qlnx_host_t *ha, struct qlnx_fastpath *fp, struct mbuf **m_headp)
 static void
 qlnx_stop(qlnx_host_t *ha)
 {
-	struct ifnet	*ifp = ha->ifp;
+	if_t ifp = ha->ifp;
 	int		i;
 
-	ifp->if_drv_flags &= ~(IFF_DRV_OACTIVE | IFF_DRV_RUNNING);
+	if_setdrvflagbits(ifp, 0, (IFF_DRV_OACTIVE | IFF_DRV_RUNNING));
 
 	/*
 	 * We simply lock and unlock each fp->tx_mtx to
@@ -3963,7 +3962,7 @@ qlnx_tpa_start(qlnx_host_t *ha,
 	struct eth_fast_path_rx_tpa_start_cqe *cqe)
 {
 	uint32_t		agg_index;
-        struct ifnet		*ifp = ha->ifp;
+        if_t ifp = ha->ifp;
 	struct mbuf		*mp;
 	struct mbuf		*mpf = NULL, *mpl = NULL, *mpc = NULL;
 	struct sw_rx_data	*sw_rx_data;
@@ -4403,7 +4402,7 @@ qlnx_tpa_end(qlnx_host_t *ha, struct qlnx_fastpath *fp,
 	struct mbuf		*mp;
 	uint32_t		agg_index;
 	uint32_t		len = 0;
-        struct ifnet		*ifp = ha->ifp;
+        if_t ifp = ha->ifp;
 
         QL_DPRINT7(ha, "[%d]: enter\n \
                 \t type = 0x%x\n \
@@ -4554,7 +4553,7 @@ qlnx_tpa_end(qlnx_host_t *ha, struct qlnx_fastpath *fp,
                 fp->rss_id, mp->m_pkthdr.csum_data,
                 (uint64_t)mp->m_pkthdr.csum_flags, mp->m_len, mp->m_pkthdr.len);
 
-	(*ifp->if_input)(ifp, mp);
+	if_input(ifp, mp);
 
 	rxq->tpa_info[agg_index].mpf = NULL;
 	rxq->tpa_info[agg_index].mpl = NULL;
@@ -4570,7 +4569,7 @@ qlnx_rx_int(qlnx_host_t *ha, struct qlnx_fastpath *fp, int budget,
         uint16_t		hw_comp_cons, sw_comp_cons;
         int			rx_pkt = 0;
         struct qlnx_rx_queue	*rxq = fp->rxq;
-        struct ifnet		*ifp = ha->ifp;
+        if_t ifp = ha->ifp;
 	struct ecore_dev	*cdev = &ha->cdev;
 	struct ecore_hwfn       *p_hwfn;
 
@@ -4806,16 +4805,16 @@ qlnx_rx_int(qlnx_host_t *ha, struct qlnx_fastpath *fp, int budget,
 #else
 
 			if (tcp_lro_rx(lro, mp, 0))
-				(*ifp->if_input)(ifp, mp);
+				if_input(ifp, mp);
 
 #endif /* #if (__FreeBSD_version >= 1100101) || (defined QLNX_QSORT_LRO) */
 
 		} else {
-			(*ifp->if_input)(ifp, mp);
+			if_input(ifp, mp);
 		}
 #else
 
-		(*ifp->if_input)(ifp, mp);
+		if_input(ifp, mp);
 
 #endif /* #ifdef QLNX_SOFT_LRO */
 
@@ -4877,7 +4876,7 @@ qlnx_fp_isr(void *arg)
 		struct qlnx_tx_queue	*txq;
 		uint16_t		elem_left;
 
-		lro_enable = ha->ifp->if_capenable & IFCAP_LRO;
+		lro_enable = if_getcapenable(ha->ifp) & IFCAP_LRO;
 
                 ecore_sb_ack(fp->sb_info, IGU_INT_DISABLE, 0);
 
@@ -6370,7 +6369,7 @@ static void
 qlnx_free_tx_br(qlnx_host_t *ha, struct qlnx_fastpath *fp)
 {
 	struct mbuf	*mp;
-	struct ifnet	*ifp = ha->ifp;
+	if_t ifp = ha->ifp;
 
 	if (mtx_initialized(&fp->tx_mtx)) {
 		if (fp->tx_br != NULL) {
@@ -6715,7 +6714,7 @@ qlnx_start_queues(qlnx_host_t *ha)
         struct ecore_dev		*cdev = &ha->cdev;
         struct ecore_rss_params		*rss_params = &ha->rss_params;
         struct qlnx_update_vport_params	vport_update_params;
-        struct ifnet			*ifp;
+        if_t ifp;
         struct ecore_hwfn		*p_hwfn;
 	struct ecore_sge_tpa_params	tpa_params;
 	struct ecore_queue_start_common_params qparams;
@@ -6732,10 +6731,10 @@ qlnx_start_queues(qlnx_host_t *ha)
         }
 
 #ifndef QLNX_SOFT_LRO
-        hw_lro_enable = ifp->if_capenable & IFCAP_LRO;
+        hw_lro_enable = if_getcapenable(ifp) & IFCAP_LRO;
 #endif /* #ifndef QLNX_SOFT_LRO */
 
-        rc = qlnx_start_vport(cdev, vport_id, ifp->if_mtu, drop_ttl0_flg,
+        rc = qlnx_start_vport(cdev, vport_id, if_getmtu(ifp), drop_ttl0_flg,
 			vlan_removal_en, tx_switching, hw_lro_enable);
 
         if (rc) {
@@ -6745,7 +6744,7 @@ qlnx_start_queues(qlnx_host_t *ha)
 
 	QL_DPRINT2(ha, "Start vport ramrod passed, "
 		"vport_id = %d, MTU = %d, vlan_removal_en = %d\n",
-		vport_id, (int)(ifp->if_mtu + 0xe), vlan_removal_en);
+		vport_id, (int)(if_getmtu(ifp) + 0xe), vlan_removal_en);
 
         for_each_rss(i) {
 		struct ecore_rxq_start_ret_params rx_ret_params;
@@ -6883,8 +6882,8 @@ qlnx_start_queues(qlnx_host_t *ha)
 		tpa_params.tpa_gro_consistent_flg = 0;
 		tpa_params.tpa_max_aggs_num = ETH_TPA_MAX_AGGS_NUM;
 		tpa_params.tpa_max_size = (uint16_t)(-1);
-		tpa_params.tpa_min_size_to_start = ifp->if_mtu/2;
-		tpa_params.tpa_min_size_to_cont = ifp->if_mtu/2;
+		tpa_params.tpa_min_size_to_start = if_getmtu(ifp)/2;
+		tpa_params.tpa_min_size_to_cont = if_getmtu(ifp)/2;
 
 		vport_update_params.sge_tpa_params = &tpa_params;
 	}
@@ -7370,12 +7369,12 @@ qlnx_drain_soft_lro(qlnx_host_t *ha)
 {
 #ifdef QLNX_SOFT_LRO
 
-	struct ifnet	*ifp;
+	if_t ifp;
 	int		i;
 
 	ifp = ha->ifp;
 
-	if (ifp->if_capenable & IFCAP_LRO) {
+	if (if_getcapenable(ifp) & IFCAP_LRO) {
 	        for (i = 0; i < ha->num_rss; i++) {
 			struct qlnx_fastpath *fp = &ha->fp_array[i];
 			struct lro_ctrl *lro;
