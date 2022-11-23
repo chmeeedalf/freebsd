@@ -734,13 +734,23 @@ uint64_t if_getbaudrate(if_t ifp);
 int if_setcapabilities(if_t ifp, int capabilities);
 int if_setcapabilitiesbit(if_t ifp, int setbit, int clearbit);
 int if_getcapabilities(if_t ifp);
+int if_setcapabilities2(if_t ifp, int capabilities);
+int if_setcapabilities2bit(if_t ifp, int setbit, int clearbit);
+int if_getcapabilities2(if_t ifp);
 int if_togglecapenable(if_t ifp, int togglecap);
 int if_setcapenable(if_t ifp, int capenable);
 int if_setcapenablebit(if_t ifp, int setcap, int clearcap);
 int if_getcapenable(if_t ifp);
+int if_setcapenable2(if_t ifp, int capenable);
+int if_setcapenable2bit(if_t ifp, int setcap, int clearcap);
+int if_getcapenable2(if_t ifp);
+int if_getindex(if_t ifp);
 const char *if_getdname(if_t ifp);
+void if_setdname(if_t ifp, const char *name);
+char *if_getxname(if_t ifp);
 void if_setdescr(if_t ifp, char *descrbuf);
 void if_freedescr(char *descrbuf);
+int if_getalloctype(if_t ifp);
 int if_setdev(if_t ifp, void *dev);
 int if_setdrvflagbits(if_t ifp, int if_setflags, int clear_flags);
 int if_getdrvflags(if_t ifp);
@@ -749,6 +759,7 @@ int if_clearhwassist(if_t ifp);
 int if_sethwassistbits(if_t ifp, int toset, int toclear);
 int if_sethwassist(if_t ifp, int hwassist_bit);
 int if_gethwassist(if_t ifp);
+int if_togglehwassist(if_t ifp, int toggle_bits);
 int if_setsoftc(if_t ifp, void *softc);
 void *if_getsoftc(if_t ifp);
 int if_setflags(if_t ifp, int flags);
@@ -780,6 +791,8 @@ void *if_gethandle(u_char);
 void if_bpfmtap(if_t ifp, struct mbuf *m);
 void if_etherbpfmtap(if_t ifp, struct mbuf *m);
 void if_vlancap(if_t ifp);
+int if_transmit(if_t ifp, struct mbuf *m);
+int if_init(if_t ifp);
 
 /*
  * Traversing through interface address lists.
@@ -793,14 +806,20 @@ u_int if_llmaddr_count(if_t);
 
 int if_getamcount(if_t ifp);
 struct ifaddr * if_getifaddr(if_t ifp);
+typedef u_int if_addr_cb_t(void *, struct ifaddr *, u_int);
+u_int if_foreach_addr_type(if_t ifp, int type, if_addr_cb_t cb, void *cb_arg);
 
 /* Functions */
 void if_setinitfn(if_t ifp, void (*)(void *));
+void if_setinputfn(if_t ifp, void (*)(if_t, struct mbuf *));
 void if_setioctlfn(if_t ifp, int (*)(if_t, u_long, caddr_t));
+void if_setoutputfn(if_t ifp, int(*)
+    (if_t, struct mbuf *, const struct sockaddr *, struct route *));
 void if_setstartfn(if_t ifp, void (*)(if_t));
 void if_settransmitfn(if_t ifp, if_transmit_fn_t);
 void if_setqflushfn(if_t ifp, if_qflush_fn_t);
 void if_setgetcounterfn(if_t ifp, if_get_counter_t);
+void if_setsndtagallocfn(if_t ifp, if_snd_tag_alloc_t);
 
 /* TSO */
 void if_hw_tsomax_common(if_t ifp, struct ifnet_hw_tsomax *);
