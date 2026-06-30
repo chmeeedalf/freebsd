@@ -251,6 +251,7 @@ dev/sound/macio/i2s.c		optional	snd_ai2s powermac
 dev/sound/macio/onyx.c		optional	snd_ai2s iicbus powermac
 dev/sound/macio/snapper.c	optional	snd_ai2s iicbus powermac
 dev/sound/macio/tumbler.c	optional	snd_ai2s iicbus powermac
+dev/sound/i2s/wm8776.c		optional	snd_i2s iicbus
 dev/syscons/scgfbrndr.c		optional	sc
 dev/tsec/if_tsec.c		optional	tsec
 dev/tsec/if_tsec_fdt.c		optional	tsec
@@ -318,8 +319,10 @@ powerpc/mpc85xx/atpic.c		optional	mpc85xx isa
 powerpc/mpc85xx/ds1553_bus_fdt.c	optional	ds1553
 powerpc/mpc85xx/ds1553_core.c	optional	ds1553
 powerpc/mpc85xx/fsl_diu.c	optional	mpc85xx diu
+powerpc/mpc85xx/fsl_dma.c	optional	mpc85xx
 powerpc/mpc85xx/fsl_espi.c	optional	mpc85xx spibus
 powerpc/mpc85xx/fsl_sata.c	optional	mpc85xx ata
+powerpc/mpc85xx/fsl_ssi.c	optional	mpc85xx sound ssi
 powerpc/mpc85xx/i2c.c		optional	mpc85xx iicbus
 powerpc/mpc85xx/isa.c		optional	mpc85xx isa
 powerpc/mpc85xx/lbc.c		optional	mpc85xx
