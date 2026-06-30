@@ -99,7 +99,8 @@ __DEFAULT_DEPENDENT_OPTIONS = \
 # some memory-hungry workloads.
 #
 .if ${MACHINE_ARCH} == "armv7" \
-    || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "powerpc"
+    || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "powerpc" \
+    || ${MACHINE_ARCH} == "powerpcspe"
 __DEFAULT_NO_OPTIONS+= PIE
 .else
 __DEFAULT_YES_OPTIONS+=PIE

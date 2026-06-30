@@ -151,6 +151,7 @@ KNOWN_ARCHES?=	aarch64/arm64 \
 		powerpc \
 		powerpc64/powerpc \
 		powerpc64le/powerpc \
+		powerpcspe/powerpc \
 		riscv64/riscv
 
 .if ${TARGET} == ${TARGET_ARCH}
@@ -1716,6 +1717,7 @@ KERNCONF=${KERNFAST}
 .endif
 GENERIC_KERNCONF_SUFX_powerpc64=	64
 GENERIC_KERNCONF_SUFX_powerpc64le=	64LE
+GENERIC_KERNCONF_powerpcspe=	MPC85XXSPE
 GENERIC_KERNCONF?=	${GENERIC_KERNCONF_${TARGET_ARCH}:UGENERIC${GENERIC_KERNCONF_SUFX_${TARGET_ARCH}}}
 INSTKERNNAME?=	kernel
 
