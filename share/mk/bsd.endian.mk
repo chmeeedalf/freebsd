@@ -9,6 +9,7 @@ MACHINE_ARCH_LIST.little = \
 
 MACHINE_ARCH_LIST.big = \
 	powerpc \
+	powerpcspe \
 	powerpc64
 
 .for e in big little
