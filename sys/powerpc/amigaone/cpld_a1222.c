@@ -185,7 +185,10 @@ cpld_attach(device_t dev)
 	struct make_dev_args mda;
 	struct cpld_softc *sc;
 	int rid;
-	int date, time, tmp;
+	int date, tmp;
+#if 0
+	int time;
+#endif
 	int err;
 	struct sysctl_ctx_list *ctx;
 	struct sysctl_oid *tree;
@@ -205,8 +208,10 @@ cpld_attach(device_t dev)
 	if (bootverbose) {
 		date = (cpld_read_pair(sc, CPLD_REG_DATE_UU) << 16) |
 		    cpld_read_pair(sc, CPLD_REG_DATE_LU);
+#if 0
 		time = (cpld_read_pair(sc, CPLD_REG_TIME_UU) << 16) |
 		    cpld_read_pair(sc, CPLD_REG_TIME_LU);
+#endif
 
 		device_printf(dev, "Build date: %04x-%02x-%02x\n",
 		    (date >> 16) & 0xffff, (date >> 8) & 0xff, date & 0xff);
