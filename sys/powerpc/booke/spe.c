@@ -194,6 +194,35 @@ save_vec_nodrop(struct thread *td)
 	}
 }
 
+void
+enable_vec_kern(void)
+{
+	mtmsr(mfmsr() | PSL_VEC);
+}
+
+void
+disable_vec(struct thread *td)
+{
+	register_t msr;
+	struct pcb *pcb;
+	struct trapframe *tf;
+
+	pcb = td->td_pcb;
+	tf = trapframe(td);
+
+	/* Disable PSL_VEC in kernel (if enabled) */
+	msr = mfmsr() & ~PSL_VEC;
+	isync();
+	mtmsr(msr);
+
+	/*
+	 * Disable PSL_VEC in userspace. It will be re-enabled when
+	 * an Altivec instruction is executed.
+	 */
+	tf->srr1 &= ~PSL_VEC;
+	pcb->pcb_flags &= ~PCB_VEC;
+}
+
 #define	SPE_INST_MASK	0x31f
 #define	EADD	0x200
 #define	ESUB	0x201
