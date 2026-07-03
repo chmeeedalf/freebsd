@@ -27,8 +27,16 @@
  */
 
 #include "fenv.h"
+#ifdef __SPE__
+#include <sys/types.h>
+#include <machine/spr.h>
+#endif
 
+#ifdef __SPE__
+const fenv_t __fe_dfl_env = SPEFSCR_DFLT;
+#else
 const fenv_t __fe_dfl_env = 0x00000000;
+#endif
 
 int
 (feclearexcept)(int excepts)
