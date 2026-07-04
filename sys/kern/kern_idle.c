@@ -42,6 +42,12 @@
 static void idle_setup(void *dummy);
 SYSINIT(idle_setup, SI_SUB_SCHED_IDLE, SI_ORDER_FIRST, idle_setup, NULL);
 
+static void
+idle_wrap(void *arg)
+{
+	sched_idletd(arg);
+}
+
 /*
  * Set up per-cpu idle process contexts.  The AP's shouldn't be running or
  * accessing their idle processes at this point, so don't bother with
@@ -62,11 +68,11 @@ idle_setup(void *dummy)
 	STAILQ_FOREACH(pc, &cpuhead, pc_allcpu) {
 #endif
 #ifdef SMP
-		error = kproc_kthread_add(sched_idletd, NULL, &p, &td,
+		error = kproc_kthread_add(idle_wrap, NULL, &p, &td,
 		    RFSTOPPED | RFHIGHPID, 0, "idle", "idle: cpu%d", pc->pc_cpuid);
 		pc->pc_idlethread = td;
 #else
-		error = kproc_kthread_add(sched_idletd, NULL, &p, &td,
+		error = kproc_kthread_add(idle_wrap, NULL, &p, &td,
 		    RFSTOPPED | RFHIGHPID, 0, "idle", "idle");
 		PCPU_SET(idlethread, td);
 #endif
