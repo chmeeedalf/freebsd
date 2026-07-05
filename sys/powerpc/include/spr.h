@@ -34,7 +34,7 @@
 #define	mtspr(reg, val)							\
 	__asm __volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
 #define	mfspr(reg)							\
-	( { register_t val;						\
+	( { __register_t val;						\
 	  __asm __volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
 
