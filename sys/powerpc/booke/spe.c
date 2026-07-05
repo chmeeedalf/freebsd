@@ -455,22 +455,22 @@ spe_explode(struct fpemu *fe, struct fpn *fp, uint32_t type,
 static uint32_t
 spe_save_reg_high(int reg)
 {
-	uint32_t vec[2];
-#define EVSTDW(n)   case n: __asm __volatile ("evstdw %1,0(%0)" \
-		:: "b"(vec), "n"(n) : "memory"); break;
+	uint32_t high;
+#define EVSTW(n)   case n: __asm __volatile ("evstwwe %1,%0" \
+		: "=m"(high) : "n"(n) : "memory"); break;
 	switch (reg) {
-	EVSTDW(0);	EVSTDW(1);	EVSTDW(2);	EVSTDW(3);
-	EVSTDW(4);	EVSTDW(5);	EVSTDW(6);	EVSTDW(7);
-	EVSTDW(8);	EVSTDW(9);	EVSTDW(10);	EVSTDW(11);
-	EVSTDW(12);	EVSTDW(13);	EVSTDW(14);	EVSTDW(15);
-	EVSTDW(16);	EVSTDW(17);	EVSTDW(18);	EVSTDW(19);
-	EVSTDW(20);	EVSTDW(21);	EVSTDW(22);	EVSTDW(23);
-	EVSTDW(24);	EVSTDW(25);	EVSTDW(26);	EVSTDW(27);
-	EVSTDW(28);	EVSTDW(29);	EVSTDW(30);	EVSTDW(31);
+	EVSTW(0);	EVSTW(1);	EVSTW(2);	EVSTW(3);
+	EVSTW(4);	EVSTW(5);	EVSTW(6);	EVSTW(7);
+	EVSTW(8);	EVSTW(9);	EVSTW(10);	EVSTW(11);
+	EVSTW(12);	EVSTW(13);	EVSTW(14);	EVSTW(15);
+	EVSTW(16);	EVSTW(17);	EVSTW(18);	EVSTW(19);
+	EVSTW(20);	EVSTW(21);	EVSTW(22);	EVSTW(23);
+	EVSTW(24);	EVSTW(25);	EVSTW(26);	EVSTW(27);
+	EVSTW(28);	EVSTW(29);	EVSTW(30);	EVSTW(31);
 	}
-#undef EVSTDW
+#undef EVSTW
 
-	return (vec[0]);
+	return (high);
 }
 
 /*
